@@ -1,6 +1,18 @@
 # %%
 # Helper functions to convert between the board and a column ,row tuple
 
+
+# Helper function to better print the board
+def printBoard(board, rows, columns):
+    boardString = ""
+    for i in range(rows):
+        row = []
+        for j in range(columns):
+            row.append(str(board[i * columns + j]))
+        boardString += " ".join(row) + "\n"
+    return boardString
+
+
 # %%
 from kaggle_environments import evaluate, make
 
@@ -20,7 +32,7 @@ def my_agent(observation, configuration):
               Total number of cells: {len(observation.board)}
               Number of Filled cells: {len([c for c in observation.board if c != 0])}
               -------------------------
-              Board: {observation.board}
+              Board: \n{printBoard(observation.board, configuration.rows, configuration.columns)}\n
             *********************************************************
               """
         )
