@@ -3,7 +3,6 @@ from kaggle_environments import evaluate, make
 
 def my_agent(observation, configuration):
     from random import choice
-    print(configuration.columns)
 
     ##return 0 
     for n in range(configuration.columns):
@@ -11,7 +10,6 @@ def my_agent(observation, configuration):
         print(observation.board)
         print(len(observation.board))
         print(type(observation.board))
-        print(configuration.columns)
         print(observation.board[n])
         print(observation.board[n] == 0)
 
