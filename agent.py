@@ -88,9 +88,63 @@ def find_available_boards(board_state,configuration_columns, player):
 def get_value():
     pass
 
+def get_value_better(board):
+    rows = [board[i*7:(i+1)*7] for i in range(6)]
+    columns = [[board[p + 7*r] for r in range(6)] for p in range(7)]
+
+    count_1 = 0
+    count_2 = 0
+
+    score = 0
+
+    scoring = {
+        0: 0,
+        1: 0,
+        2: 10,
+        3: 40,
+        4: 1000
+    }
+   
+    candidates = rows + columns
+
+    for candidate in candidates:
+        if sum(candidate) == 0:
+            next
+        for r in candidate:
+            print("Considering Row: ", r)
+            if r == 1:
+                count_1 += 1
+
+                score -= scoring[count_2]
+                count_2 = 0
+                # max_count_1 = max(max_count_1,count_1)
+            elif r == 2:
+                count_2 += 1
+
+                score += scoring[count_1]
+                count_1 = 0
+                # max_count_2 = max(max_count_2,count_2)
+            else:
+                score -= scoring[count_2]
+                score += scoring[count_1]
+                count_1 = 0
+                count_2 = 0
+
+            if count_1 == 4:
+                print(1000)
+                return 1000
+            if count_2 == 4:
+                print(-1000)
+                return -1000
+    
+    print(score)
+    return score
+
+
 def get_value_simple(board):
     vertical_points = list(range(21))
     horizontal_points = [n + 7*i for i in range(1,6) for n in list(range(4))]
+    score = 0
 
     #vertical
     for p in vertical_points:
@@ -99,10 +153,11 @@ def get_value_simple(board):
         if candidate[0] == 0:
             continue
         sum_candidate = sum(candidate)
-        if sum_candidate == 4:
+        if candidate == [1,1,1,1]:
             return 1000
-        if sum_candidate == 8:
+        if candidate == [2,2,2,2]:
             return -1000
+        score += count_consecutive_score(p)
         
     #horizontal
     for p in horizontal_points:
@@ -110,12 +165,46 @@ def get_value_simple(board):
         if candidate[0] == 0:
             continue
         sum_candidate = sum(candidate)
-        if sum_candidate == 4:
+        if candidate == [1,1,1,1]:
             return 1000
-        if sum_candidate == 8:
+        if candidate == [2,2,2,2]:
             return -1000
+        score += count_consecutive_score(p)
         
-    return 0
+    return score
+
+def count_consecutive_score(row):
+    max_count_1 = count_1 = 0
+    max_count_2 = count_2 = 0
+
+    scoring = {
+        0: 0,
+        1: 0,
+        2: 10,
+        3: 40,
+    }
+   
+    for r in row:
+        if r == 1:
+            count_1 += 1
+            count_2 = 0
+            max_count_1 = max(max_count_1,count_1)
+        elif r == 2:
+            count_2 += 1
+            count_1 = 0
+            max_count_2 = max(max_count_2,count_2)
+        else:
+            count_1 = 0
+            count_2 = 0
+
+    return scoring[max_count_1], -scoring[max_count_2]
+
+    if max_count_1 > max_count_2:
+        return max_count_1
+    else:
+        return -max_count_2
+
+
 
             
 
