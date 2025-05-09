@@ -88,6 +88,7 @@ def find_available_boards(board_state,configuration_columns, player):
 def get_value():
     pass
 
+#interates through each row and column one and calcualtes score, a connect 4 triggers an instant (+/-) 1000 returned
 def get_value_better(board):
     rows = [board[i*7:(i+1)*7] for i in range(6)]
     columns = [[board[p + 7*r] for r in range(6)] for p in range(7)]
@@ -117,13 +118,11 @@ def get_value_better(board):
 
                 score -= scoring[count_2]
                 count_2 = 0
-                # max_count_1 = max(max_count_1,count_1)
             elif r == 2:
                 count_2 += 1
 
                 score += scoring[count_1]
                 count_1 = 0
-                # max_count_2 = max(max_count_2,count_2)
             else:
                 score -= scoring[count_2]
                 score += scoring[count_1]
@@ -141,6 +140,20 @@ def get_value_better(board):
     return score
 
 
+if __name__ == "__main__":
+    env = make("connectx", debug=True)
+    env.render()
+
+    env.reset()
+    # Play as the first agent against default "random" agent.
+    env.run([my_agent, "random"])
+    env.render(mode="ipython", width=500, height=450)
+
+
+
+
+#### Heuristic Graveyard
+
 def get_value_simple(board):
     vertical_points = list(range(21))
     horizontal_points = [n + 7*i for i in range(1,6) for n in list(range(4))]
@@ -150,9 +163,6 @@ def get_value_simple(board):
     for p in vertical_points:
         points = [p +7*i for i in range(4)]
         candidate = [board[i] for i in points]
-        if candidate[0] == 0:
-            continue
-        sum_candidate = sum(candidate)
         if candidate == [1,1,1,1]:
             return 1000
         if candidate == [2,2,2,2]:
@@ -162,9 +172,6 @@ def get_value_simple(board):
     #horizontal
     for p in horizontal_points:
         candidate = board[p:p+4]
-        if candidate[0] == 0:
-            continue
-        sum_candidate = sum(candidate)
         if candidate == [1,1,1,1]:
             return 1000
         if candidate == [2,2,2,2]:
@@ -203,19 +210,5 @@ def count_consecutive_score(row):
         return max_count_1
     else:
         return -max_count_2
-
-
-
-            
-
-if __name__ == "__main__":
-    env = make("connectx", debug=True)
-    env.render()
-
-    env.reset()
-    # Play as the first agent against default "random" agent.
-    env.run([my_agent, "random"])
-    env.render(mode="ipython", width=500, height=450)
-
 
 # %%
