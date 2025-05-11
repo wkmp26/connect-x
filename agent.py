@@ -16,44 +16,28 @@ def printBoard(board, rows, columns):
 # %%
 from kaggle_environments import evaluate, make
 
+# for now: agent is always 1, always max
+agent_num=1
+opponent_num=2
+agent_minimax="max"
+
+def find_best_move(board,configuration):
+    next_states=find_available_boards(board,[c for c in range(configuration.columns)],agent_num)
+    values = [minimax(board,configuration,agent_minimax) for board in next_states]
+    best_state,best_val=(None,float("-inf"))
+    for i in range(len(values)):
+        if values[i]>best_val:
+            best_val=values[i]
+            best_state=next_states[i]
+    # find the best move
+    diff=[a - b for a, b in zip(board, best_state)]
+    for j in range(len(diff)):
+        if diff[j]!=0: 
+            return j%7
+        
 
 def my_agent(observation, configuration):
-
-    print(observation.board)
-
-    print_board(observation.board) 
-
-    states = find_available_boards(observation.board, list(range(configuration.columns)), 1)
-    for s in states:
-        print("---------------------")
-        print_board(s)
-
-    return 1
-    from random import choice
-
-    SELECTED_COLUMN = 1
-
-    ##return 0
-    for n in range(configuration.columns):
-        print(
-            f"""
-            *********************************************************
-              Number of columns: {n}
-              Number of rows: {configuration.rows}
-              Total number of cells: {len(observation.board)}
-              Number of Filled cells: {len([c for c in observation.board if c != 0])}
-              -------------------------
-              Board: \n{printBoard(observation.board, configuration.rows, configuration.columns)}\n
-            *********************************************************
-              """
-        )
-
-        return SELECTED_COLUMN
-
-    # Not exactly what this for if 1 is always returned?
-    return choice(
-        [c for c in range(configuration.columns) if observation.board[c] == 0]
-    )
+    return find_best_move(observation.board,configuration)
 
 def print_board(board):
     print(board[:6])
@@ -63,30 +47,51 @@ def print_board(board):
     print(board[28:34])
     print(board[35:41])
 
+def minimax(board,configuration,player,alpha=float('-inf'), beta=float('inf'), depth=0):
+    if depth==7:
+        return get_value_better(board)
+    if player == "max":
+      # get max of its kids(when min runs)
+      next_states=find_available_boards(board,[c for c in range(configuration.columns)],agent_num)
+      best=float('-inf')
+      for pos in next_states:
+        best=max(minimax(pos,configuration,"min",max(best,alpha), beta,depth+1),best)
+        # if this child is greater than beta, give up & send back
+        if best>beta:
+          return best
+      return best
+    if player == "min":
+      # get the min of its kids
+      next_states=find_available_boards(board,[c for c in range(configuration.columns)],opponent_num)
+      best=float('inf')
+      for pos in next_states:
+        best=min(minimax(pos,configuration,"max",alpha,min(best,beta),depth+1),best)
+        # if this child is less than alpha, give up & send this back
+        if best<alpha:
+          return best
+      return best
+
 def find_available_boards(board_state,configuration_columns, player):
 
     states = []
-    #remove full columns
+    available_columns=[]
     for c in configuration_columns:
-        if board_state[c] != 0:
-            configuration_columns.remove(c)
+        if board_state[c] == 0:
+            available_columns.append(c)
 
-    for c in configuration_columns:
-        board_copy = board_state.copy()
+    for c in available_columns:
+        
         while board_state[c] == 0:
             c = c + 7
             if c >= 41:
                 break
+        
         c = c - 7
-        board_copy[c] = player
-        # print("Adding the following state:")
-        # print_board(board_copy)
-        states.append(board_copy)
-
+        if board_state[c]==0:
+            board_copy = board_state.copy()
+            board_copy[c] = player
+            states.append(board_copy)
     return states
-
-def get_value():
-    pass
 
 #interates through each row and column one and calcualtes score, a connect 4 triggers an instant (+/-) 1000 returned
 def get_value_better(board):
@@ -112,7 +117,6 @@ def get_value_better(board):
         if sum(candidate) == 0:
             next
         for r in candidate:
-            print("Considering Row: ", r)
             if r == 1:
                 count_1 += 1
 
@@ -130,13 +134,10 @@ def get_value_better(board):
                 count_2 = 0
 
             if count_1 == 4:
-                print(1000)
                 return 1000
             if count_2 == 4:
-                print(-1000)
                 return -1000
     
-    print(score)
     return score
 
 
@@ -146,10 +147,8 @@ if __name__ == "__main__":
 
     env.reset()
     # Play as the first agent against default "random" agent.
-    env.run([my_agent, "random"])
+    env.run([my_agent, "negamax"])
     env.render(mode="ipython", width=500, height=450)
-
-
 
 
 #### Heuristic Graveyard
@@ -205,10 +204,5 @@ def count_consecutive_score(row):
             count_2 = 0
 
     return scoring[max_count_1], -scoring[max_count_2]
-
-    if max_count_1 > max_count_2:
-        return max_count_1
-    else:
-        return -max_count_2
 
 # %%
