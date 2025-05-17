@@ -23,7 +23,8 @@ agent_minimax="max"
 
 def find_best_move(board,configuration):
     next_states=find_available_boards(board,[c for c in range(configuration.columns)],agent_num)
-    values = [minimax(board,configuration,agent_minimax) for board in next_states]
+    values = [minimax(board,configuration,"min") for board in next_states]
+    
     best_state,best_val=(None,float("-inf"))
     for i in range(len(values)):
         if values[i]>best_val:
@@ -49,7 +50,7 @@ def print_board(board):
 
 def minimax(board,configuration,player,alpha=float('-inf'), beta=float('inf'), depth=0):
     if depth==7:
-        return get_value_better(board)
+        return get_value_window(board)
     if player == "max":
       # get max of its kids(when min runs)
       next_states=find_available_boards(board,[c for c in range(configuration.columns)],agent_num)
@@ -94,6 +95,88 @@ def find_available_boards(board_state,configuration_columns, player):
     return states
 
 #interates through each row and column one and calcualtes score, a connect 4 triggers an instant (+/-) 1000 returned
+def get_value_window(board):
+    
+    max_count_1=0
+    max_count_2=0
+    # rows
+    scoring = {
+        0: 0,
+        1: 0,
+        2: 10,
+        3: 70,
+    }
+    r=0
+    while r<len(board):
+        if r%7==4:
+            r+=3
+        if r>=len(board):break
+        window=0
+        count1=0
+        count2=0
+        one_stuck=False
+        two_stuck=False
+        while window<4:
+            if board[r+window]==1:
+                if not one_stuck:
+                    count1+=1
+                count2=0
+                two_stuck=True
+            if board[r+window]==2:
+                count1=0
+                one_stuck=True
+                if not two_stuck:
+                    count2+=1
+            window+=1
+        r+=1
+        if count1>0 and count2>0: continue
+        max_count_1=max(max_count_1,count1)
+        max_count_2=max(max_count_2,count2)
+    #columns
+    row=0
+    while row<4:
+        for c in range(len(board)):
+            if c%7==0:
+                row+=1
+            if row==4: break
+            window=0
+            count1=0
+            count2=0
+            one_stuck=False
+            two_stuck=False
+            while window<4:
+                if board[c+window*7]==1:
+                    if not one_stuck:
+                        count1+=1
+                    count2=0
+                    two_stuck=True
+                if board[c+window*7]==2:
+                    if not two_stuck:
+                        count2+=1
+                    count1=0
+                    one_stuck=True
+                    
+                window+=1
+            max_count_1=max(max_count_1,count1)
+            max_count_2=max(max_count_2,count2)
+    
+    if max_count_1==4: return 1000
+    if max_count_2==4: return -1000
+
+
+    return scoring[max_count_1]-scoring[max_count_2]
+
+if __name__ == "__main__":
+    env = make("connectx", debug=True)
+    env.render()
+
+    env.reset()
+    # Play as the first agent against default "random" agent.
+    env.run([my_agent, "negamax"])
+    env.render(mode="ipython", width=500, height=450)
+
+
+
 def get_value_better(board):
     rows = [board[i*7:(i+1)*7] for i in range(6)]
     columns = [[board[p + 7*r] for r in range(6)] for p in range(7)]
@@ -140,19 +223,7 @@ def get_value_better(board):
     
     return score
 
-
-if __name__ == "__main__":
-    env = make("connectx", debug=True)
-    env.render()
-
-    env.reset()
-    # Play as the first agent against default "random" agent.
-    env.run([my_agent, "negamax"])
-    env.render(mode="ipython", width=500, height=450)
-
-
 #### Heuristic Graveyard
-
 def get_value_simple(board):
     vertical_points = list(range(21))
     horizontal_points = [n + 7*i for i in range(1,6) for n in list(range(4))]
