@@ -83,6 +83,20 @@ def init_diagonals():
             ]
             diagonal_cache.append(pieces)
 
+    # Horizontals
+    for i in range(ROWS):
+        for j in range(COLUMNS - X + 1):
+            startIndex = i * COLUMNS + j
+            pieces = [k for k in range(startIndex, startIndex + X)]
+            diagonal_cache.append(pieces)
+
+    # Verticals
+    for i in range(COLUMNS):
+        for j in range(ROWS - X + 1):
+            startIndex = j * COLUMNS + i
+            pieces = [k for k in range(startIndex, startIndex + (X * COLUMNS), COLUMNS)]
+            diagonal_cache.append(pieces)
+
 
 def find_best_move(board, configuration):
 
@@ -98,9 +112,6 @@ def find_best_move(board, configuration):
 
     # Select the best state based on the minimax value
 
-    print("Values: ", values)
-    print("Next States: ", next_states)
-
     best_state, best_val = (None, float("-inf"))
 
     # For each state, if the value is greater than the best value, update the best state and value
@@ -111,12 +122,6 @@ def find_best_move(board, configuration):
 
     # Return the column of the best state
 
-    print(
-        "Best State: ",
-        printBoard(best_state, configuration.rows, configuration.columns),
-    )
-    print("Best Value: ", best_val)
-
     diff = [a - b for a, b in zip(board, best_state)]
     for j in range(len(diff)):
         if diff[j] != 0:
@@ -124,10 +129,6 @@ def find_best_move(board, configuration):
 
 
 def my_agent(observation, configuration):
-    print(
-        "Board State: ",
-        printBoard(observation.board, configuration.rows, configuration.columns),
-    )
     global total_depth
     total_depth += 2
     return find_best_move(observation.board, configuration)
@@ -141,6 +142,7 @@ def minimax(
     beta=float("inf"),
     depth=0,
     cache=None,
+    maxDepth=5,
 ):
     global total_depth
 
@@ -157,8 +159,14 @@ def minimax(
     ):
         return cache[board_hash][0]
 
-    score = get_value_window(board)
-    if score == 1000 or score == -1000 or depth >= 7:
+    # Check if the game is over
+    score = isTerminal(board)
+    if score != 0:
+        cache[board_hash] = (score, total_depth + depth, "EXACT")
+        return score
+
+    if depth >= maxDepth:
+        score = get_value_window(board)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
     else:
@@ -167,6 +175,7 @@ def minimax(
 
             next_states = find_available_boards(board, configuration.columns, agent_num)
             if len(next_states) == 0:
+                score = get_value_window(board)
                 cache[board_hash] = (score, total_depth + depth, "EXACT")
                 return score
 
@@ -183,6 +192,7 @@ def minimax(
                         beta,
                         depth + 1,
                         cache,
+                        maxDepth=8 - (len(next_states) // 4),
                     ),
                     best,
                 )
@@ -198,6 +208,7 @@ def minimax(
                 board, configuration.columns, opponent_num
             )
             if len(next_states) == 0:
+                score = get_value_window(board)
                 cache[board_hash] = (score, total_depth + depth, "EXACT")
                 return score
 
@@ -212,6 +223,7 @@ def minimax(
                         min(best, beta),
                         depth + 1,
                         cache,
+                        maxDepth=8 - (len(next_states) // 4),
                     ),
                     best,
                 )
@@ -245,8 +257,33 @@ def find_available_boards(board_state, configuration_columns, player):
     return states
 
 
+def isTerminal(board):
+    X = 4
+
+    global diagonal_cache
+
+    try:
+        diagonal_cache
+    except NameError:
+        init_diagonals()
+
+    for diagonal in diagonal_cache:
+        pieces = [board[i] for i in diagonal]
+        count1 = pieces.count(1)
+        count2 = pieces.count(2)
+        if count1 == X:
+            return 1000
+        if count2 == X:
+            return -1000
+    return 0
+
+
 # iterates through each row and column one and calculates score, a connect 4 triggers an instant (+/-) 1000 returned
 def get_value_window(board):
+
+    score = isTerminal(board)
+    if score != 0:
+        return score
 
     max_count_1 = 0
     max_count_2 = 0
@@ -317,22 +354,6 @@ def get_value_window(board):
             # # Check diagonals
             # # Start in Colum 0
 
-            X = 4
-
-            global diagonal_cache
-
-            if len(diagonal_cache) == 0:
-                init_diagonals()
-
-            for diagonal in diagonal_cache:
-                pieces = [board[i] for i in diagonal]
-                count1 = pieces.count(1)
-                count2 = pieces.count(2)
-                if count1 == X:
-                    return 1000
-                if count2 == X:
-                    return -1000
-
     # Now backwards
 
     if max_count_1 == 4:
@@ -353,22 +374,21 @@ def main():
     global total_depth
     total_depth = 0
 
+    global cache
+    cache = {}
+
     # Play as the first agent against default "random" agent.
     env.run([my_agent, "negamax"])
 
     # Print who wins
-    env.render(mode="ipython", width=500, height=450)
+    # env.render(mode="ipython", width=500, height=450)
     agent_stats = env.state[0]
-    print("\nAgent Stats: ", agent_stats)
+    # print("\nAgent Stats: ", agent_stats)
     return (
         agent_stats.reward,
         agent_stats.observation.step,
         agent_stats.observation.remainingOverageTime,
     )
-
-
-if __name__ == "__main__":
-    print(f"{main()}")
 
 
 def get_value_better(board):
@@ -466,5 +486,19 @@ def count_consecutive_score(row):
 
     return scoring[max_count_1], -scoring[max_count_2]
 
+
+# %%
+if __name__ == "__main__":
+    print(f"{main()}")
+
+# %%
+# Scripts that runs the agent 100 times and writes it to a CSV file
+
+with open("agent2.csv", "w") as f:
+    f.write("Attempt, Reward, Steps, Time Remaining\n")
+    for i in range(200):
+        reward, steps, time = main()
+        f.write(f"{i}, {reward}, {steps}, {time}\n")
+        print(f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time}")
 
 # %%
