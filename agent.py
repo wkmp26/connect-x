@@ -67,9 +67,6 @@ def find_best_move(board, configuration):
 
     best_state, best_val = (None, float("-inf"))
 
-    print("Best State: ", next_states)
-    print("Best Value: ", values)
-
     # For each state, if the value is greater than the best value, update the best state and value
     for i in range(len(values)):
         if values[i] > best_val:
@@ -104,60 +101,98 @@ def minimax(
     cache=None,
 ):
     global total_depth
-    if depth == 8:
 
-        if tuple(board) in cache and cache[tuple(board)][3] >= (total_depth + depth):
-            return cache[tuple(board)][0]
-        else:
-            score = get_value_window(board)
-            cache[tuple(board)] = (score, alpha, beta, total_depth + depth, board)
-            return score
-    if player == "max":
-        if tuple(board) in cache and cache[tuple(board)][3] >= (total_depth + depth):
-            return cache[tuple(board)][0]
+    board_hash = tuple(board)
+
+    if (
+        board_hash in cache
+        and cache[board_hash][1] >= (total_depth + depth)
+        and cache[board_hash][2] == "VALUE"
+    ):
+        return cache[board_hash][0]
+
+    if depth == 12:
+        score = get_value_window(board)
+        cache[board_hash] = (score, total_depth + depth, "VALUE")
+        return score
+    else:
         # get max of its kids(when min runs)
-        next_states = find_available_boards(board, configuration.columns, agent_num)
-        if len(next_states) == 0:
-            score = get_value_window(board)
-            cache[tuple(board)] = (score, alpha, beta, total_depth + depth, board)
-            return score
-        best = float("-inf")
-        for pos in next_states:
-            best = max(
-                minimax(
-                    pos, configuration, "min", max(best, alpha), beta, depth + 1, cache
-                ),
-                best,
-            )
-            # if this child is greater than beta, give up & send back
+        if player == "max":
 
-            if best > beta:
-                return best
-        cache[tuple(board)] = (best, alpha, beta, total_depth + depth, board)
-        return best
-    if player == "min":
+            next_states = find_available_boards(board, configuration.columns, agent_num)
+            if len(next_states) == 0:
+                score = get_value_window(board)
+                cache[board_hash] = (score, total_depth + depth, "VALUE")
+                return score
 
-        if tuple(board) in cache and cache[tuple(board)][3] >= (total_depth + depth):
-            return cache[tuple(board)][0]
-        # get the min of its kids
-        next_states = find_available_boards(board, configuration.columns, opponent_num)
-        if len(next_states) == 0:
-            score = get_value_window(board)
-            cache[tuple(board)] = (score, alpha, beta, total_depth + depth, board)
-            return score
-        best = float("inf")
-        for pos in next_states:
-            best = min(
-                minimax(
-                    pos, configuration, "max", alpha, min(best, beta), depth + 1, cache
-                ),
-                best,
+            # Check if min already has eliminated this branch
+            if (
+                board_hash in cache
+                and cache[board_hash][1] >= (total_depth + depth)
+                and cache[board_hash][2] == "LOWER"
+                and beta <= cache[board_hash][0]
+            ):
+                return cache[board_hash][0]
+
+            best = float("-inf")
+            for pos in next_states:
+                best = max(
+                    minimax(
+                        pos,
+                        configuration,
+                        "min",
+                        max(best, alpha),
+                        beta,
+                        depth + 1,
+                        cache,
+                    ),
+                    best,
+                )
+                # if this child is greater than beta, give up & send back
+                if best > beta:
+                    cache[board_hash] = (best, total_depth + depth, "LOWER")
+                    return best
+            cache[board_hash] = (best, total_depth + depth, "VALUE")
+            return best
+        if player == "min":
+
+            # Check if max already has eliminated this branch
+            if (
+                board_hash in cache
+                and cache[board_hash][1] >= (total_depth + depth)
+                and cache[board_hash][2] == "UPPER"
+                and alpha >= cache[board_hash][0]
+            ):
+                return cache[board_hash][0]
+
+            next_states = find_available_boards(
+                board, configuration.columns, opponent_num
             )
-            # if this child is less than alpha, give up & send this back
-            if best < alpha:
-                return best
-        cache[tuple(board)] = (best, alpha, beta, total_depth + depth, board)
-        return best
+            if len(next_states) == 0:
+                score = get_value_window(board)
+                cache[board_hash] = (score, total_depth + depth, "VALUE")
+                return score
+
+            best = float("inf")
+            for pos in next_states:
+                best = min(
+                    minimax(
+                        pos,
+                        configuration,
+                        "max",
+                        alpha,
+                        min(best, beta),
+                        depth + 1,
+                        cache,
+                    ),
+                    best,
+                )
+                # if this child is less than alpha, give up & send this back
+                if best < alpha:
+                    cache[board_hash] = (best, total_depth + depth, "UPPER")
+                    return best
+            cache[board_hash] = (best, total_depth + depth, "VALUE")
+            return best
 
 
 def find_available_boards(board_state, configuration_columns, player):
