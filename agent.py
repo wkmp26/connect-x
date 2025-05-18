@@ -65,6 +65,9 @@ def find_best_move(board, configuration):
 
     # Select the best state based on the minimax value
 
+    print("Values: ", values)
+    print("Next States: ", next_states)
+
     best_state, best_val = (None, float("-inf"))
 
     # For each state, if the value is greater than the best value, update the best state and value
@@ -74,6 +77,12 @@ def find_best_move(board, configuration):
             best_state = next_states[i]
 
     # Return the column of the best state
+
+    print(
+        "Best State: ",
+        printBoard(best_state, configuration.rows, configuration.columns),
+    )
+    print("Best Value: ", best_val)
 
     diff = [a - b for a, b in zip(board, best_state)]
     for j in range(len(diff)):
@@ -102,18 +111,22 @@ def minimax(
 ):
     global total_depth
 
-    board_hash = tuple(board)
+    board_hash = (tuple(board), player)
 
     if (
         board_hash in cache
         and cache[board_hash][1] >= (total_depth + depth)
-        and cache[board_hash][2] == "VALUE"
+        and (
+            cache[board_hash][2] == "EXACT"
+            or (cache[board_hash][2] == "LOWER" and beta <= cache[board_hash][0])
+            or (cache[board_hash][2] == "UPPER" and alpha >= cache[board_hash][0])
+        )
     ):
         return cache[board_hash][0]
 
-    if depth == 12:
-        score = get_value_window(board)
-        cache[board_hash] = (score, total_depth + depth, "VALUE")
+    score = get_value_window(board)
+    if score == 1000 or score == -1000 or depth >= 8:
+        cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
     else:
         # get max of its kids(when min runs)
@@ -121,18 +134,10 @@ def minimax(
 
             next_states = find_available_boards(board, configuration.columns, agent_num)
             if len(next_states) == 0:
-                score = get_value_window(board)
-                cache[board_hash] = (score, total_depth + depth, "VALUE")
+                cache[board_hash] = (score, total_depth + depth, "EXACT")
                 return score
 
             # Check if min already has eliminated this branch
-            if (
-                board_hash in cache
-                and cache[board_hash][1] >= (total_depth + depth)
-                and cache[board_hash][2] == "LOWER"
-                and beta <= cache[board_hash][0]
-            ):
-                return cache[board_hash][0]
 
             best = float("-inf")
             for pos in next_states:
@@ -152,25 +157,15 @@ def minimax(
                 if best > beta:
                     cache[board_hash] = (best, total_depth + depth, "LOWER")
                     return best
-            cache[board_hash] = (best, total_depth + depth, "VALUE")
+            cache[board_hash] = (best, total_depth + depth, "EXACT")
             return best
         if player == "min":
-
-            # Check if max already has eliminated this branch
-            if (
-                board_hash in cache
-                and cache[board_hash][1] >= (total_depth + depth)
-                and cache[board_hash][2] == "UPPER"
-                and alpha >= cache[board_hash][0]
-            ):
-                return cache[board_hash][0]
 
             next_states = find_available_boards(
                 board, configuration.columns, opponent_num
             )
             if len(next_states) == 0:
-                score = get_value_window(board)
-                cache[board_hash] = (score, total_depth + depth, "VALUE")
+                cache[board_hash] = (score, total_depth + depth, "EXACT")
                 return score
 
             best = float("inf")
@@ -191,7 +186,7 @@ def minimax(
                 if best < alpha:
                     cache[board_hash] = (best, total_depth + depth, "UPPER")
                     return best
-            cache[board_hash] = (best, total_depth + depth, "VALUE")
+            cache[board_hash] = (best, total_depth + depth, "EXACT")
             return best
 
 
@@ -208,7 +203,7 @@ def find_available_boards(board_state, configuration_columns, player):
     for c in available_columns:
 
         # OPTIMIZE: Avoid while loops Slow in Python ...
-        for i in range(41 - c, -1, -7):
+        for i in range(41 - (6 - c), -1, -7):
             if board_state[i] == 0:
                 board_copy = board_state.copy()
                 board_copy[i] = player
@@ -285,6 +280,49 @@ def get_value_window(board):
                 window += 1
             max_count_1 = max(max_count_1, count1)
             max_count_2 = max(max_count_2, count2)
+
+    # # Check diagonals
+    # # Start in Colum 0
+
+    X = 4
+    COLUMNS = 7
+    ROWS = 6
+
+    # Diagonal from top left to bottom right
+    for i in range(ROWS - X + 1):
+        for j in range(COLUMNS - X + 1):
+            startIndex = i * COLUMNS + j
+            pieces = [
+                board[k]
+                for k in range(
+                    startIndex, startIndex + (X - 1) * (COLUMNS + 1), COLUMNS + 1
+                )
+            ]
+            count1 = pieces.count(1)
+            count2 = pieces.count(2)
+            if count1 == X:
+                return 1000
+            if count2 == X:
+                return -1000
+
+    # Diagonal from bottom left to top right
+    for i in range(X - 1, ROWS):
+        for j in range(COLUMNS - X + 1):
+            startIndex = i * COLUMNS + j
+            pieces = [
+                board[k]
+                for k in range(
+                    startIndex, startIndex - (X - 1) * (COLUMNS - 1), -(COLUMNS - 1)
+                )
+            ]
+            count1 = pieces.count(1)
+            count2 = pieces.count(2)
+            if count1 == X:
+                return 1000
+            if count2 == X:
+                return -1000
+
+    # Now backwards
 
     if max_count_1 == 4:
         return 1000
