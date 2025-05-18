@@ -140,10 +140,8 @@ def determine_max_depth(children, numberOfStepsIn):
         return 5
     elif numberOfStepsIn < 20 or children <= 2:
         return 9
-    elif numberOfStepsIn < 30 or children <= 4:
-        return 7
     else:
-        return 6
+        return 7
 
 
 def minimax(
