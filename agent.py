@@ -51,14 +51,14 @@ global cache
 cache = {}
 
 
-def init_diagonals():
+def init_terminal():
 
     X = 4
     COLUMNS = 7
     ROWS = 6
 
-    global diagonal_cache
-    diagonal_cache = []
+    global terminal_cache
+    terminal_cache = []
 
     # Diagonal from top left to bottom right
     for i in range(ROWS - X + 1):
@@ -70,7 +70,7 @@ def init_diagonals():
                     startIndex, startIndex + (X - 1) * (COLUMNS + 1), COLUMNS + 1
                 )
             ]
-            diagonal_cache.append(pieces)
+            terminal_cache.append(pieces)
     # Diagonal from bottom left to top right
     for i in range(X - 1, ROWS):
         for j in range(COLUMNS - X + 1):
@@ -81,21 +81,21 @@ def init_diagonals():
                     startIndex, startIndex - (X - 1) * (COLUMNS - 1), -(COLUMNS - 1)
                 )
             ]
-            diagonal_cache.append(pieces)
+            terminal_cache.append(pieces)
 
     # Horizontals
     for i in range(ROWS):
         for j in range(COLUMNS - X + 1):
             startIndex = i * COLUMNS + j
             pieces = [k for k in range(startIndex, startIndex + X)]
-            diagonal_cache.append(pieces)
+            terminal_cache.append(pieces)
 
     # Verticals
     for i in range(COLUMNS):
         for j in range(ROWS - X + 1):
             startIndex = j * COLUMNS + i
             pieces = [k for k in range(startIndex, startIndex + (X * COLUMNS), COLUMNS)]
-            diagonal_cache.append(pieces)
+            terminal_cache.append(pieces)
 
 
 def find_best_move(board, configuration):
@@ -192,7 +192,7 @@ def minimax(
                         beta,
                         depth + 1,
                         cache,
-                        maxDepth=8 - (len(next_states) // 4),
+                        maxDepth=10 - (len(next_states) // 3),
                     ),
                     best,
                 )
@@ -223,7 +223,7 @@ def minimax(
                         min(best, beta),
                         depth + 1,
                         cache,
-                        maxDepth=8 - (len(next_states) // 4),
+                        maxDepth=10 - (len(next_states) // 3),
                     ),
                     best,
                 )
@@ -260,15 +260,15 @@ def find_available_boards(board_state, configuration_columns, player):
 def isTerminal(board):
     X = 4
 
-    global diagonal_cache
+    global terminal_cache
 
     try:
-        diagonal_cache
+        terminal_cache
     except NameError:
-        init_diagonals()
+        init_terminal()
 
-    for diagonal in diagonal_cache:
-        pieces = [board[i] for i in diagonal]
+    for state in terminal_cache:
+        pieces = [board[i] for i in state]
         count1 = pieces.count(1)
         count2 = pieces.count(2)
         if count1 == X:
@@ -280,10 +280,6 @@ def isTerminal(board):
 
 # iterates through each row and column one and calculates score, a connect 4 triggers an instant (+/-) 1000 returned
 def get_value_window(board):
-
-    score = isTerminal(board)
-    if score != 0:
-        return score
 
     max_count_1 = 0
     max_count_2 = 0
@@ -350,11 +346,6 @@ def get_value_window(board):
                 window += 1
             max_count_1 = max(max_count_1, count1)
             max_count_2 = max(max_count_2, count2)
-
-            # # Check diagonals
-            # # Start in Colum 0
-
-    # Now backwards
 
     if max_count_1 == 4:
         return 1000
