@@ -134,6 +134,18 @@ def my_agent(observation, configuration):
     return find_best_move(observation.board, configuration)
 
 
+def determine_max_depth(children, numberOfStepsIn):
+    # Determine the max depth based on the number of children and the number of steps in
+    if numberOfStepsIn < 10 or children >= 6:
+        return 5
+    elif numberOfStepsIn < 20 or children <= 2:
+        return 9
+    elif numberOfStepsIn < 30 or children <= 4:
+        return 7
+    else:
+        return 6
+
+
 def minimax(
     board,
     configuration,
@@ -170,6 +182,7 @@ def minimax(
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
     else:
+
         # get max of its kids(when min runs)
         if player == "max":
 
@@ -192,7 +205,9 @@ def minimax(
                         beta,
                         depth + 1,
                         cache,
-                        maxDepth=10 - (len(next_states) // 3),
+                        maxDepth=determine_max_depth(
+                            len(next_states), total_depth + depth
+                        ),
                     ),
                     best,
                 )
@@ -223,7 +238,9 @@ def minimax(
                         min(best, beta),
                         depth + 1,
                         cache,
-                        maxDepth=10 - (len(next_states) // 3),
+                        maxDepth=determine_max_depth(
+                            len(next_states), total_depth + depth
+                        ),
                     ),
                     best,
                 )
