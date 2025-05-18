@@ -51,6 +51,39 @@ global cache
 cache = {}
 
 
+def init_diagonals():
+
+    X = 4
+    COLUMNS = 7
+    ROWS = 6
+
+    global diagonal_cache
+    diagonal_cache = []
+
+    # Diagonal from top left to bottom right
+    for i in range(ROWS - X + 1):
+        for j in range(COLUMNS - X + 1):
+            startIndex = i * COLUMNS + j
+            pieces = [
+                k
+                for k in range(
+                    startIndex, startIndex + (X - 1) * (COLUMNS + 1), COLUMNS + 1
+                )
+            ]
+            diagonal_cache.append(pieces)
+    # Diagonal from bottom left to top right
+    for i in range(X - 1, ROWS):
+        for j in range(COLUMNS - X + 1):
+            startIndex = i * COLUMNS + j
+            pieces = [
+                k
+                for k in range(
+                    startIndex, startIndex - (X - 1) * (COLUMNS - 1), -(COLUMNS - 1)
+                )
+            ]
+            diagonal_cache.append(pieces)
+
+
 def find_best_move(board, configuration):
 
     global cache
@@ -125,7 +158,7 @@ def minimax(
         return cache[board_hash][0]
 
     score = get_value_window(board)
-    if score == 1000 or score == -1000 or depth >= 8:
+    if score == 1000 or score == -1000 or depth >= 7:
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
     else:
@@ -281,46 +314,24 @@ def get_value_window(board):
             max_count_1 = max(max_count_1, count1)
             max_count_2 = max(max_count_2, count2)
 
-    # # Check diagonals
-    # # Start in Colum 0
+            # # Check diagonals
+            # # Start in Colum 0
 
-    X = 4
-    COLUMNS = 7
-    ROWS = 6
+            X = 4
 
-    # Diagonal from top left to bottom right
-    for i in range(ROWS - X + 1):
-        for j in range(COLUMNS - X + 1):
-            startIndex = i * COLUMNS + j
-            pieces = [
-                board[k]
-                for k in range(
-                    startIndex, startIndex + (X - 1) * (COLUMNS + 1), COLUMNS + 1
-                )
-            ]
-            count1 = pieces.count(1)
-            count2 = pieces.count(2)
-            if count1 == X:
-                return 1000
-            if count2 == X:
-                return -1000
+            global diagonal_cache
 
-    # Diagonal from bottom left to top right
-    for i in range(X - 1, ROWS):
-        for j in range(COLUMNS - X + 1):
-            startIndex = i * COLUMNS + j
-            pieces = [
-                board[k]
-                for k in range(
-                    startIndex, startIndex - (X - 1) * (COLUMNS - 1), -(COLUMNS - 1)
-                )
-            ]
-            count1 = pieces.count(1)
-            count2 = pieces.count(2)
-            if count1 == X:
-                return 1000
-            if count2 == X:
-                return -1000
+            if len(diagonal_cache) == 0:
+                init_diagonals()
+
+            for diagonal in diagonal_cache:
+                pieces = [board[i] for i in diagonal]
+                count1 = pieces.count(1)
+                count2 = pieces.count(2)
+                if count1 == X:
+                    return 1000
+                if count2 == X:
+                    return -1000
 
     # Now backwards
 
@@ -332,7 +343,7 @@ def get_value_window(board):
     return scoring[max_count_1] - scoring[max_count_2]
 
 
-if __name__ == "__main__":
+def main():
     env = make("connectx", debug=True)
     env.render()
 
@@ -344,7 +355,20 @@ if __name__ == "__main__":
 
     # Play as the first agent against default "random" agent.
     env.run([my_agent, "negamax"])
+
+    # Print who wins
     env.render(mode="ipython", width=500, height=450)
+    agent_stats = env.state[0]
+    print("\nAgent Stats: ", agent_stats)
+    return (
+        agent_stats.reward,
+        agent_stats.observation.step,
+        agent_stats.observation.remainingOverageTime,
+    )
+
+
+if __name__ == "__main__":
+    print(f"{main()}")
 
 
 def get_value_better(board):
