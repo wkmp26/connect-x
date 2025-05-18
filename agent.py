@@ -37,7 +37,6 @@ def printBoard(board, rows, columns):
 # %%
 from kaggle_environments import evaluate, make
 from multiprocessing import Queue, Manager, Process
-import sys
 
 # Key : Board State
 # Value : (CalculatedValue, Alpha, Beta, Depth)
@@ -48,50 +47,20 @@ import sys
 agent_num = 1
 opponent_num = 2
 agent_minimax = "max"
+global cache
+cache = {}
 
 
 def find_best_move(board, configuration):
 
+    global cache
+
     # Finds all possible next states (moves) in the game
     next_states = find_available_boards(board, configuration.columns, agent_num)
 
-    # # Calculate the minimax value for each next state
-
-    values = []
-    global total_depth
-    # with Manager() as multiProcessManager:
-    #     queue = Queue()
-    #     shared_cache = multiProcessManager.dict()
-    #     processList = []
-    #     for i in range(len(next_states)):
-    #         process = Process(
-    #             target=minimax_process,
-    #             args=(
-    #                 next_states[i],
-    #                 configuration,
-    #                 "min",
-    #                 queue,
-    #                 float("-inf"),
-    #                 float("inf"),
-    #                 0,
-    #                 total_depth,
-    #                 shared_cache,
-    #             ),
-    #         )
-    #         process.start()
-    #         processList.append(process)
-    #     for i in range(len(processList)):
-    #         print("Waiting for process ", i)
-    #         processList[i].join()
-    #     while not queue.empty():
-    #         print("Getting value from queue")
-    #         values.append(queue.get())
-
-    cache = {}
-
+    # Calculate the minimax value for each next state
     values = [
-        minimax(board, configuration, "min", total_depth=total_depth, cache=cache)
-        for board in next_states
+        minimax(board, configuration, "min", cache=cache) for board in next_states
     ]
 
     # Select the best state based on the minimax value
@@ -125,33 +94,6 @@ def my_agent(observation, configuration):
     return find_best_move(observation.board, configuration)
 
 
-def minimax_process(
-    board,
-    configuration,
-    player,
-    queue: Queue,
-    alpha=float("-inf"),
-    beta=float("inf"),
-    global_depth=0,
-    depth=0,
-    cache=None,
-):
-    print("Starting process for board:", cache)
-    value = minimax(
-        board,
-        configuration,
-        player,
-        alpha,
-        beta,
-        depth,
-        global_depth,
-        cache,
-    )
-    print("Value: ", value)
-    queue.put(value)
-    sys.exit(0)
-
-
 def minimax(
     board,
     configuration,
@@ -159,11 +101,10 @@ def minimax(
     alpha=float("-inf"),
     beta=float("inf"),
     depth=0,
-    total_depth=0,
     cache=None,
 ):
-
-    if depth == 7:
+    global total_depth
+    if depth == 8:
 
         if tuple(board) in cache and cache[tuple(board)][3] >= (total_depth + depth):
             return cache[tuple(board)][0]
@@ -184,21 +125,14 @@ def minimax(
         for pos in next_states:
             best = max(
                 minimax(
-                    pos,
-                    configuration,
-                    "min",
-                    max(best, alpha),
-                    beta,
-                    depth + 1,
-                    total_depth,
-                    cache,
+                    pos, configuration, "min", max(best, alpha), beta, depth + 1, cache
                 ),
                 best,
             )
             # if this child is greater than beta, give up & send back
 
             if best > beta:
-                break
+                return best
         cache[tuple(board)] = (best, alpha, beta, total_depth + depth, board)
         return best
     if player == "min":
@@ -215,20 +149,13 @@ def minimax(
         for pos in next_states:
             best = min(
                 minimax(
-                    pos,
-                    configuration,
-                    "max",
-                    alpha,
-                    min(best, beta),
-                    depth + 1,
-                    total_depth,
-                    cache,
+                    pos, configuration, "max", alpha, min(best, beta), depth + 1, cache
                 ),
                 best,
             )
             # if this child is less than alpha, give up & send this back
             if best < alpha:
-                break
+                return best
         cache[tuple(board)] = (best, alpha, beta, total_depth + depth, board)
         return best
 
