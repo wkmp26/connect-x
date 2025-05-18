@@ -138,10 +138,14 @@ def determine_max_depth(children, numberOfStepsIn):
     # Determine the max depth based on the number of children and the number of steps in
     if numberOfStepsIn < 10 or children >= 6:
         return 5
-    elif numberOfStepsIn < 20 or children <= 2:
+    elif numberOfStepsIn < 20 and children <= 4:
         return 9
-    else:
+    elif numberOfStepsIn < 30 and children <= 2:
+        return 10
+    elif numberOfStepsIn < 30:
         return 7
+    else:
+        return 64
 
 
 def minimax(
@@ -172,6 +176,16 @@ def minimax(
     # Check if the game is over
     score = isTerminal(board)
     if score != 0:
+        if player == "max":
+            if score == 1000:
+                score = score - (total_depth + depth)
+            else:
+                score = score + (total_depth + depth)
+        else:
+            if score == -1000:
+                score = score + (total_depth + depth)
+            else:
+                score = score - (total_depth + depth)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
 
