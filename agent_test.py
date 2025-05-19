@@ -122,8 +122,103 @@ def count_consecutive_score(row):
     else:
         return -max_count_2
 
+def find_available_boards(board_state,configuration_columns, player):
+
+    states = []
+    available_columns=[]
+    for c in configuration_columns:
+        if board_state[c] == 0:
+            available_columns.append(c)
+
+    for c in available_columns:
+        
+        while board_state[c] == 0:
+            c = c + 7
+            if c > 41:
+                break
+        
+        c = c - 7
+        if c == 41:
+            print("IM AT 41")
+
+        if board_state[c]==0:
+            board_copy = board_state.copy()
+            board_copy[c] = player
+            states.append(board_copy)
+    return states
+
 import time
 
+def test_board_moves_1():
+    board1 = [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0
+                ]
+        
+    boards = [
+            [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                1,0,0,0,0,0,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,1,0,0,0,0,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,1,0,0,0,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,1,0,0,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,1,0,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,1,0
+                ],
+                [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,1
+                ]
+    ]
+
+    assert find_available_boards(board1,[0,1,2,3,4,5,6],1) == boards
 
 def test_vertical_1():
     board1 = [
@@ -187,3 +282,29 @@ def test_score_2():
                 ]
             
     assert get_value_better(board3) == 0
+
+def test_score_4():
+    print("Starting scoring 2")
+    board3 = [
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,
+                0,0,0,0,0,2,0,
+                0,0,0,0,0,2,0,
+                1,2,2,0,0,2,0,
+                1,1,1,0,0,2,0
+                ]
+            
+    assert get_value_better(board3) == -1000
+
+def test_score_5():
+    print("Starting scoring 2")
+    board3 = [
+                1,1,0,0,0,0,0,
+                1,2,0,0,0,0,0,
+                2,2,1,0,0,0,2,
+                1,1,1,0,0,0,2,
+                2,1,1,0,0,0,2,
+                1,1,2,0,2,0,2
+                ]
+            
+    assert get_value_better(board3) == -1000

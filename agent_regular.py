@@ -1,4 +1,4 @@
-# %%
+
 # Helper functions to convert between the board and a column ,row tuple
 
 
@@ -10,13 +10,8 @@ def printBoard(board, rows, columns):
         for j in range(columns):
             row.append(str(board[i * columns + j]))
         boardString += " ".join(row) + "\n"
-    #return boardString
-    print("------------------------------------")
-    print(boardString)
-    print("------------------------------------")
+    return boardString
 
-
-# %%
 from kaggle_environments import evaluate, make
 
 # for now: agent is always 1, always max
@@ -43,14 +38,12 @@ def my_agent(observation, configuration):
     return find_best_move(observation.board,configuration)
 
 def print_board(board):
-    print("------------------------------------")
     print(board[:6])
     print(board[7:13])
     print(board[14:20])
     print(board[21:27])
     print(board[28:34])
     print(board[35:41])
-    print("------------------------------------")
 
 def minimax(board,configuration,player,alpha=float('-inf'), beta=float('inf'), depth=0):
     if depth==7:
@@ -88,7 +81,7 @@ def find_available_boards(board_state,configuration_columns, player):
         
         while board_state[c] == 0:
             c = c + 7
-            if c > 41:
+            if c >= 41:
                 break
         
         c = c - 7
@@ -146,15 +139,10 @@ def get_value_better(board):
     return score
 
 def human_agent(observation, configuration):
-    #print_board(observation.board)
+    print_board(observation.board)
     return int(input("Enter move (0-6): "))
 
 
-
-
-
-
-# %%
 if __name__ == "__main__":
     env = make("connectx", debug=True)
     #env.render()
@@ -174,8 +162,6 @@ if __name__ == "__main__":
         env.step(action)
 
 
-
-# %%
 #### Heuristic Graveyard
 
 def get_value_simple(board):
@@ -229,46 +215,3 @@ def count_consecutive_score(row):
             count_2 = 0
 
     return scoring[max_count_1], -scoring[max_count_2]
-
-# %%
-# Set up environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Replace `human_agent` with another agent if you want AI vs AI
-agents = [human_agent, my_agent]
-
-# Run interactively
-while not env.done:
-    current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-    observation = env.state[current_player].observation
-    action = agents[current_player](observation, env.configuration)
-    env.step(action)
-    env.render(mode="ipython", width=500, height=450)
-
-
-
-# %%
-# Initialize environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Play game step-by-step
-while not env.done:
-    observation = env.state[0].observation
-    current_player = [i for i, p in enumerate(env.state) if p.status == "ACTIVE"][0]
-
-
-    print_board(observation.board)
-
-    if current_player == 0:
-        move = human_agent(observation, env.configuration)
-        env.step([move, None])
-    else:
-        move = my_agent(observation, env.configuration)
-        env.step([None, move])
-
-# Show final board
-print_board(env.state[0].observation.board)
-env.render(mode="ipython", width=500, height=450)
-# %%
