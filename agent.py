@@ -235,29 +235,6 @@ def human_agent(observation, configuration):
 
 
 
-
-
-# %%
-if __name__ == "__main__":
-    env = make("connectx", debug=True)
-    #env.render()
-
-    env.reset()
-    # Play as the first agent against default "random"/"negamax" agent.
-    #env.run([human_agent, my_agent])
-
-    #env.render(mode="ipython", width=500, height=450)
-
-    agents = [human_agent,my_agent]
-
-    while not env.done:
-        current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-        observation = env.state[current_player].observation
-        action = agents[current_player](observation, env.configuration)
-        env.step(action)
-
-
-
 # %%
 #### Heuristic Graveyard
 def get_value_simple(board):
@@ -312,6 +289,8 @@ def count_consecutive_score(row):
 
     return scoring[max_count_1], -scoring[max_count_2]
 
+
+'''
 # %%
 # Set up environment
 env = make("connectx", debug=True)
@@ -354,3 +333,24 @@ while not env.done:
 print_board(env.state[0].observation.board)
 env.render(mode="ipython", width=500, height=450)
 # %%
+
+# %%
+if __name__ == "__main__":
+    env = make("connectx", debug=True)
+    #env.render()
+
+    env.reset()
+    # Play as the first agent against default "random"/"negamax" agent.
+    #env.run([human_agent, my_agent])
+
+    #env.render(mode="ipython", width=500, height=450)
+
+    agents = [human_agent,my_agent]
+
+    while not env.done:
+        current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
+        observation = env.state[current_player].observation
+        action = agents[current_player](observation, env.configuration)
+        env.step(action)
+
+'''
