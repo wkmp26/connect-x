@@ -31,7 +31,7 @@ def printBoard(board, rows, columns):
         for j in range(columns):
             row.append(str(board[i * columns + j]))
         boardString += " ".join(row) + "\n"
-    #return boardString
+    # return boardString
     print("------------------------------------")
     print(boardString)
     print("------------------------------------")
@@ -39,7 +39,6 @@ def printBoard(board, rows, columns):
 
 # %%
 from kaggle_environments import evaluate, make
-from multiprocessing import Queue, Manager, Process
 
 # Key : Board State
 # Value : (CalculatedValue, Alpha, Beta, Depth)
@@ -50,8 +49,6 @@ from multiprocessing import Queue, Manager, Process
 agent_num = 1
 opponent_num = 2
 agent_minimax = "max"
-global cache
-cache = {}
 
 
 def init_terminal():
@@ -101,7 +98,7 @@ def init_terminal():
             terminal_cache.append(pieces)
 
 
-def find_best_move(board, configuration):
+def find_best_move(board, configuration, total_depth):
 
     global cache
 
@@ -110,7 +107,8 @@ def find_best_move(board, configuration):
 
     # Calculate the minimax value for each next state
     values = [
-        minimax(board, configuration, "min", cache=cache) for board in next_states
+        minimax(board, configuration, "min", total_depth=total_depth, cache=cache)
+        for board in next_states
     ]
 
     # Select the best state based on the minimax value
@@ -132,9 +130,19 @@ def find_best_move(board, configuration):
 
 
 def my_agent(observation, configuration):
+
+    # Checks if the necessary variables are initialized
     global total_depth
+    global cache
+    try:
+        cache
+        total_depth
+    except NameError:
+        cache = {}
+        total_depth = 0
+
     total_depth += 2
-    return find_best_move(observation.board, configuration)
+    return find_best_move(observation.board, configuration, total_depth)
 
 
 def determine_max_depth(children, numberOfStepsIn):
@@ -157,11 +165,11 @@ def minimax(
     player,
     alpha=float("-inf"),
     beta=float("inf"),
+    total_depth=0,
     depth=0,
     cache=None,
     maxDepth=5,
 ):
-    global total_depth
 
     board_hash = (tuple(board), player)
 
@@ -218,6 +226,7 @@ def minimax(
                         "min",
                         max(best, alpha),
                         beta,
+                        total_depth,
                         depth + 1,
                         cache,
                         maxDepth=determine_max_depth(
@@ -251,6 +260,7 @@ def minimax(
                         "max",
                         alpha,
                         min(best, beta),
+                        total_depth,
                         depth + 1,
                         cache,
                         maxDepth=determine_max_depth(
@@ -393,13 +403,6 @@ def main():
 
     env.reset()
 
-    # Total number of moves occurred in the game
-    global total_depth
-    total_depth = 0
-
-    global cache
-    cache = {}
-
     # Play as the first agent against default "random" agent.
     env.run([my_agent, "negamax"])
 
@@ -454,14 +457,14 @@ def get_value_better(board):
 
     return score
 
+
 def human_agent(observation, configuration):
-    #print_board(observation.board)
+    # print_board(observation.board)
     return int(input("Enter move (0-6): "))
 
 
-
-
 # %%
+
 
 #### Heuristic Graveyard
 def get_value_simple(board):
@@ -518,7 +521,7 @@ def count_consecutive_score(row):
     return scoring[max_count_1], -scoring[max_count_2]
 
 
-'''
+"""
 # %%
 # Set up environment
 env = make("connectx", debug=True)
@@ -581,4 +584,4 @@ if __name__ == "__main__":
         action = agents[current_player](observation, env.configuration)
         env.step(action)
 
-'''
+"""
