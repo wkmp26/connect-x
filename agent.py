@@ -510,13 +510,6 @@ def main():
 
     # Print who wins
     # env.render(mode="ipython", width=500, height=450)
-    agent_stats = env.state[0]
-    # print("\nAgent Stats: ", agent_stats)
-    return (
-        agent_stats.reward,
-        agent_stats.observation.step,
-        agent_stats.observation.remainingOverageTime,
-    )
     """
 
 
@@ -560,8 +553,6 @@ def get_value_better(board):
 
     return score
 
-
-
 def my_agent(observation, configuration):
 
     # Checks if the necessary variables are initialized
@@ -577,130 +568,40 @@ def my_agent(observation, configuration):
     total_depth += 2
     return find_best_move(observation.board, configuration, total_depth)
 
-#%%
-env = make("connectx", debug=True)
-
-
-#%%
-env.reset()
-# Play as the first agent against default "random" agent.
-env.run([my_agent, "negamax"])
-env.render(mode="ipython", width=500, height=450)
-
-#### Heuristic Graveyard
-"""
-def get_value_simple(board):
-    vertical_points = list(range(21))
-    horizontal_points = [n + 7 * i for i in range(1, 6) for n in list(range(4))]
-    score = 0
-
-    # vertical
-    for p in vertical_points:
-        points = [p + 7 * i for i in range(4)]
-        candidate = [board[i] for i in points]
-        if candidate == [1, 1, 1, 1]:
-            return 1000
-        if candidate == [2, 2, 2, 2]:
-            return -1000
-        score += count_consecutive_score(p)
-
-    # horizontal
-    for p in horizontal_points:
-        candidate = board[p : p + 4]
-        if candidate == [1, 1, 1, 1]:
-            return 1000
-        if candidate == [2, 2, 2, 2]:
-            return -1000
-        score += count_consecutive_score(p)
-
-    return score
-
-
-def count_consecutive_score(row):
-    max_count_1 = count_1 = 0
-    max_count_2 = count_2 = 0
-
-    scoring = {
-        0: 0,
-        1: 0,
-        2: 10,
-        3: 40,
-    }
-
-    for r in row:
-        if r == 1:
-            count_1 += 1
-            count_2 = 0
-            max_count_1 = max(max_count_1, count_1)
-        elif r == 2:
-            count_2 += 1
-            count_1 = 0
-            max_count_2 = max(max_count_2, count_2)
-        else:
-            count_1 = 0
-            count_2 = 0
-
-    return scoring[max_count_1], -scoring[max_count_2]
-
-"""
-"""
-# Set up environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Replace `human_agent` with another agent if you want AI vs AI
-agents = [human_agent, my_agent]
-
-# Run interactively
-while not env.done:
-    current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-    observation = env.state[current_player].observation
-    action = agents[current_player](observation, env.configuration)
-    env.step(action)
-    env.render(mode="ipython", width=500, height=450)
-
-
-# Initialize environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Play game step-by-step
-while not env.done:
-    observation = env.state[0].observation
-    current_player = [i for i, p in enumerate(env.state) if p.status == "ACTIVE"][0]
-
-
-    print_board(observation.board)
-
-    if current_player == 0:
-        move = human_agent(observation, env.configuration)
-        env.step([move, None])
-    else:
-        move = my_agent(observation, env.configuration)
-        env.step([None, move])
-
-# Show final board
-print_board(env.state[0].observation.board)
-env.render(mode="ipython", width=500, height=450)
-
-if __name__ == "__main__":
-    env = make("connectx", debug=True)
-    #env.render()
-
-    env.reset()
-    # Play as the first agent against default "random"/"negamax" agent.
-    #env.run([human_agent, my_agent])
-
-    #env.render(mode="ipython", width=500, height=450)
-
-    agents = [human_agent,my_agent]
-
-    while not env.done:
-        current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-        observation = env.state[current_player].observation
-        action = agents[current_player](observation, env.configuration)
-        env.step(action)
-
-"""
 
 # %%
+def create_env():
+    # Create the ConnectX environment
+    env = make("connectx", debug=True)
+    return env
+
+
+def reset(env):
+    env.reset()
+
+
+def run(env):
+    # Play as the first agent against default "random" agent.
+    env.run([my_agent, "negamax"])
+
+
+# %%
+reset(env)
+run(env)
+env.render(mode="ipython", width=500, height=450)
+# %%
+
+my_env = create_env()
+
+
+def run_agent():
+    reset(my_env)
+    run(my_env)
+
+
+with open("agent2.csv", "w") as f:
+    f.write("Attempt, Reward, Steps, Time Remaining\n")
+    for i in range(200):
+        reward, steps, time = run_agent()
+        f.write(f"{i}, {reward}, {steps}, {time}\n")
+        print(f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time}")
