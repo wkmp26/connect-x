@@ -1,8 +1,9 @@
-from agent import my_agent
+from agent_rl import my_agent
 
 class Configuration():
-    def __init__(self,columns:int):
+    def __init__(self, columns: int = 7, rows: int = 6):
         self.columns = columns
+        self.rows = rows
 
 class Observation():
     def __init__(self, board: list[int]):
@@ -43,15 +44,11 @@ def check_win(board):
             return 1
         if candidate == [2,2,2,2]:
             return 2
-        
+
 def print_board(board):
     print("------------------------------------")
-    print(board[:6])
-    print(board[7:13])
-    print(board[14:20])
-    print(board[21:27])
-    print(board[28:34])
-    print(board[35:41])
+    for r in range(6):
+        print(" ".join(str(board[r * 7 + c]) for c in range(7)))
     print("------------------------------------")
 
 
