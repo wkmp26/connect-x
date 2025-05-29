@@ -44,6 +44,111 @@ def check_win(board):
         if candidate == [2,2,2,2]:
             return 2
         
+    sec_1 = [0,1,2,3,7,14,8]
+    iter_1 = 8
+    #sector 2 (down right)
+    sec_2 = [3,4,5,6,13,20,12]
+    iter_2 = 6
+    #sector 3 (up right)
+    sec_3 = [35,36,37,38,28,21,29]
+    iter_3 = -6
+    #sector 4 (up left)
+    sec_4 = [38,39,40,41,34,27,33]
+    iter_4 = -8
+
+    curr_1, curr_2 = sector_check(board, sec_1, iter_1)
+
+    if curr_1 == 4:
+        return 1
+    elif curr_2 == 4:
+        return 2
+
+    curr_1, curr_2 = sector_check(board, sec_2, iter_2)
+
+    if curr_1 == 4:
+        return 1
+    elif curr_2 == 4:
+        return 2
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+
+    if curr_1 == 4:
+        return 1
+    elif curr_2 == 4:
+        return 2
+
+    curr_1, curr_2 = sector_check(board, sec_4, iter_4)
+
+    if curr_1 == 4:
+        return 1
+    elif curr_2 == 4:
+        return 2
+        
+
+def diagonals_windows(board):
+    #sector 1 (down left)
+    sec_1 = [0,1,2,3,7,14,8]
+    iter_1 = 8
+    #sector 2 (down right)
+    sec_2 = [3,4,5,6,13,20,12]
+    iter_2 = 6
+    #sector 3 (up right)
+    sec_3 = [35,36,37,38,28,21,29]
+    iter_3 = -6
+    #sector 4 (up left)
+    sec_4 = [38,39,40,41,34,27,33]
+    iter_4 = -8
+
+    max_count_1 = 0
+    max_count_2 = 0
+
+    curr_1, curr_2 = sector_check(board, sec_1, iter_1)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_2, iter_2)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    return max_count_1, max_count_2
+
+def sector_check(board, sector, iter):
+    max_count_1 = 0
+    max_count_2 = 0
+
+    for s in sector:
+        window = 0
+        count1 = 0
+        count2 = 0
+        one_stuck = False
+        two_stuck = False
+        while window < 4:
+            if board[s + window * iter] == 1:
+                if not one_stuck:
+                    count1 += 1
+                count2 = 0
+                two_stuck = True
+            if board[s + window * iter] == 2:
+                if not two_stuck:
+                    count2 += 1
+                count1 = 0
+                one_stuck = True
+
+            window += 1
+        max_count_1 = max(max_count_1, count1)
+        max_count_2 = max(max_count_2, count2) 
+
+    return max_count_1, max_count_2
+
+        
 def print_board(board):
     print("------------------------------------")
     print(board[:6])
@@ -76,8 +181,8 @@ def game_simulation_human(agent):
             print("Player One Wins!")
             break
 
-        move_2 = int(input("Enter move (0-6): "))
-        index_2 = find_available_index(board=game_state.board, column=move_2)
+        move_2 = int(input("Enter move (1-6): "))
+        index_2 = find_available_index(board=game_state.board, column=(move_2-1))
         game_state.board[index_2] = 2
         print_board(game_state.board)
 

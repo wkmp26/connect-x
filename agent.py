@@ -129,22 +129,6 @@ def find_best_move(board, configuration, total_depth):
             return j % 7
 
 
-def my_agent(observation, configuration):
-
-    # Checks if the necessary variables are initialized
-    global total_depth
-    global cache
-    try:
-        cache
-        total_depth
-    except NameError:
-        cache = {}
-        total_depth = 0
-
-    total_depth += 2
-    return find_best_move(observation.board, configuration, total_depth)
-
-
 def determine_max_depth(children, numberOfStepsIn):
     # Determine the max depth based on the number of children and the number of steps in
     if numberOfStepsIn < 10 or children >= 6:
@@ -360,6 +344,7 @@ def get_value_window(board):
             continue
         max_count_1 = max(max_count_1, count1)
         max_count_2 = max(max_count_2, count2)
+        
     # columns
     row = 0
     while row < 4:
@@ -393,11 +378,128 @@ def get_value_window(board):
         return 1000
     if max_count_2 == 4:
         return -1000
+    
+    
+    diagonals_1, diagonals_2 = diagonals_windows(board)
+    max_count_1 = max(max_count_1, diagonals_1)
+    max_count_2 = max(max_count_2, diagonals_2)
+    
+    if max_count_1 == 4:
+        return 1000
+    if max_count_2 == 4:
+        return -1000
 
     return scoring[max_count_1] - scoring[max_count_2]
 
+def find_available_boards(board_state,configuration_columns, player):
+
+    states = []
+    available_columns=[]
+    for c in range(configuration_columns):
+        if board_state[c] == 0:
+            available_columns.append(c)
+
+    for c in available_columns:
+        
+        while board_state[c] == 0:
+            c = c + 7
+            if c > 41:
+                break
+        
+        c = c - 7
+
+        """
+        if c == 41:
+            print("IM AT 41")
+        """
+
+        if board_state[c]==0:
+            board_copy = board_state.copy()
+            board_copy[c] = player
+            states.append(board_copy)
+    return states
+
+def diagonals_windows(board):
+    #sector 1 (down left)
+    sec_1 = [0,1,2,3,7,14,8]
+    iter_1 = 8
+    #sector 2 (down right)
+    sec_2 = [3,4,5,6,13,20,12]
+    iter_2 = 6
+    #sector 3 (up right)
+    sec_3 = [35,36,37,38,28,21,29]
+    iter_3 = -6
+    #sector 4 (up left)
+    sec_4 = [38,39,40,41,34,27,33]
+    iter_4 = -8
+
+    max_count_1 = 0
+    max_count_2 = 0
+
+    curr_1, curr_2 = sector_check(board, sec_1, iter_1)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_2, iter_2)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_4, iter_4)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+
+    return max_count_1, max_count_2
+
+def sector_check(board, sector, iter):
+    max_count_1 = 0
+    max_count_2 = 0
+
+    for s in sector:
+        window = 0
+        count1 = 0
+        count2 = 0
+        one_stuck = False
+        two_stuck = False
+        while window < 4:
+            if board[s + window * iter] == 1:
+                if not one_stuck:
+                    count1 += 1
+                count2 = 0
+                two_stuck = True
+            if board[s + window * iter] == 2:
+                if not two_stuck:
+                    count2 += 1
+                count1 = 0
+                one_stuck = True
+
+            window += 1
+
+        max_count_1 = max(max_count_1, count1)
+        max_count_2 = max(max_count_2, count2) 
+
+        if max_count_1 == 4 or max_count_2 == 4:
+            return max_count_1, max_count_2
+
+    return max_count_1, max_count_2
+
 
 def main():
+    pass
+    """
     env = make("connectx", debug=True)
     env.render()
 
@@ -415,6 +517,7 @@ def main():
         agent_stats.observation.step,
         agent_stats.observation.remainingOverageTime,
     )
+    """
 
 
 def get_value_better(board):
@@ -458,15 +561,34 @@ def get_value_better(board):
     return score
 
 
-def human_agent(observation, configuration):
-    # print_board(observation.board)
-    return int(input("Enter move (0-6): "))
+
+def my_agent(observation, configuration):
+
+    # Checks if the necessary variables are initialized
+    global total_depth
+    global cache
+    try:
+        cache
+        total_depth
+    except NameError:
+        cache = {}
+        total_depth = 0
+
+    total_depth += 2
+    return find_best_move(observation.board, configuration, total_depth)
+
+#%%
+env = make("connectx", debug=True)
 
 
-# %%
-
+#%%
+env.reset()
+# Play as the first agent against default "random" agent.
+env.run([my_agent, "negamax"])
+env.render(mode="ipython", width=500, height=450)
 
 #### Heuristic Graveyard
+"""
 def get_value_simple(board):
     vertical_points = list(range(21))
     horizontal_points = [n + 7 * i for i in range(1, 6) for n in list(range(4))]
@@ -520,9 +642,8 @@ def count_consecutive_score(row):
 
     return scoring[max_count_1], -scoring[max_count_2]
 
-
 """
-# %%
+"""
 # Set up environment
 env = make("connectx", debug=True)
 env.reset()
@@ -539,8 +660,6 @@ while not env.done:
     env.render(mode="ipython", width=500, height=450)
 
 
-
-# %%
 # Initialize environment
 env = make("connectx", debug=True)
 env.reset()
@@ -563,9 +682,7 @@ while not env.done:
 # Show final board
 print_board(env.state[0].observation.board)
 env.render(mode="ipython", width=500, height=450)
-# %%
 
-# %%
 if __name__ == "__main__":
     env = make("connectx", debug=True)
     #env.render()
@@ -585,3 +702,5 @@ if __name__ == "__main__":
         env.step(action)
 
 """
+
+# %%
