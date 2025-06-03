@@ -156,6 +156,8 @@ def minimax(
     maxDepth=5,
 ):
 
+    global start_time
+
     board_hash = (tuple(board), player)
 
     if (
@@ -185,7 +187,7 @@ def minimax(
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
 
-    if depth >= maxDepth:
+    if depth >= maxDepth or python_time.time_ns() - start_time > (1.5 * 10**9):
         score = get_value_window(board)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
@@ -560,13 +562,15 @@ def my_agent(observation, configuration):
     global total_depth
     global cache
     global time_spent
+    global start_time
     if observation.step == 0:
         cache = {}
         total_depth = 0
-    total_depth += 2
-    start_time = python_time.time()
+    else:
+        total_depth += 1
+    start_time = python_time.time_ns()
     move = find_best_move(observation.board, configuration, total_depth)
-    time_spent += python_time.time() - start_time
+    time_spent += python_time.time_ns() - start_time
     return move
 
 # %%
@@ -606,11 +610,14 @@ def run_agent():
         agent_stats.observation.step,
         agent_stats.observation.remainingOverageTime,
     )
+
 with open("agent2.csv", "w") as f:
     f.write("Attempt, Reward, Steps, Time Remaining\n")
     for i in range(200):
         reward, steps, time = run_agent()
-        f.write(f"{i}, {reward}, {steps}, {time_spent}\n")
-        print(f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent}")
+        f.write(f"{i}, {reward}, {steps}, {time_spent/(10**9)}\n")
+        print(
+            f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
+        )
 
 # %%
