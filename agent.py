@@ -560,10 +560,7 @@ def my_agent(observation, configuration):
     global total_depth
     global cache
     global time_spent
-    try:
-        cache
-        total_depth
-    except NameError:
+    if observation.step == 0:
         cache = {}
         total_depth = 0
     total_depth += 2
@@ -581,18 +578,8 @@ def reset(env):
     env.reset()
 
     # Reset all global variables
-    global total_depth
-    global cache
-    global time_spent
     global time_spent
     time_spent = 0
-    try:
-        global terminal_cache
-        del terminal_cache
-        del cache
-        del total_depth
-    except NameError:
-        pass
 
 def run(env):
     # Play as the first agent against default "random" agent.
