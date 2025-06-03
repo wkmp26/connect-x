@@ -567,7 +567,7 @@ def my_agent(observation, configuration):
         cache = {}
         total_depth = 0
     else:
-        total_depth += 1
+        total_depth += 2
     start_time = python_time.time_ns()
     move = find_best_move(observation.board, configuration, total_depth)
     time_spent += python_time.time_ns() - start_time
