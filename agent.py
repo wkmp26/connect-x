@@ -39,6 +39,7 @@ def printBoard(board, rows, columns):
 
 # %%
 from kaggle_environments import evaluate, make
+import time as python_time
 
 # Key : Board State
 # Value : (CalculatedValue, Alpha, Beta, Depth)
@@ -558,50 +559,71 @@ def my_agent(observation, configuration):
     # Checks if the necessary variables are initialized
     global total_depth
     global cache
+    global time_spent
     try:
         cache
         total_depth
     except NameError:
         cache = {}
         total_depth = 0
-
     total_depth += 2
-    return find_best_move(observation.board, configuration, total_depth)
-
+    start_time = python_time.time()
+    move = find_best_move(observation.board, configuration, total_depth)
+    time_spent += python_time.time() - start_time
+    return move
 
 # %%
 def create_env():
     # Create the ConnectX environment
     env = make("connectx", debug=True)
     return env
-
-
 def reset(env):
     env.reset()
 
+    # Reset all global variables
+    global total_depth
+    global cache
+    global time_spent
+    global time_spent
+    time_spent = 0
+    try:
+        global terminal_cache
+        del terminal_cache
+        del cache
+        del total_depth
+    except NameError:
+        pass
 
 def run(env):
     # Play as the first agent against default "random" agent.
     env.run([my_agent, "negamax"])
 
-
 # %%
+env = create_env()
 reset(env)
 run(env)
 env.render(mode="ipython", width=500, height=450)
 # %%
+global time_spent
 
 my_env = create_env()
-
-
 def run_agent():
     reset(my_env)
     run(my_env)
-
-
+    # Print who wins
+    # env.render(mode="ipython", width=500, height=450)
+    agent_stats = my_env.state[0]
+    # print("\nAgent Stats: ", agent_stats)
+    return (
+        agent_stats.reward,
+        agent_stats.observation.step,
+        agent_stats.observation.remainingOverageTime,
+    )
 with open("agent2.csv", "w") as f:
     f.write("Attempt, Reward, Steps, Time Remaining\n")
     for i in range(200):
         reward, steps, time = run_agent()
-        f.write(f"{i}, {reward}, {steps}, {time}\n")
-        print(f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time}")
+        f.write(f"{i}, {reward}, {steps}, {time_spent}\n")
+        print(f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent}")
+
+# %%
