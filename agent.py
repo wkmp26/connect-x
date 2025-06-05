@@ -187,7 +187,7 @@ def minimax(
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
 
-    if depth >= maxDepth or python_time.time_ns() - start_time > (1.5 * 10**9):
+    if depth >= maxDepth or python_time.time_ns() - start_time > (2 * 10**8):
         score = get_value_window(board)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
@@ -570,6 +570,7 @@ def my_agent(observation, configuration):
         total_depth += 2
     start_time = python_time.time_ns()
     move = find_best_move(observation.board, configuration, total_depth)
+    # print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
     time_spent += python_time.time_ns() - start_time
     return move
 
