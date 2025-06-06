@@ -41,15 +41,14 @@ def printBoard(board, rows, columns):
 from kaggle_environments import evaluate, make
 import time as python_time
 
+print("Top-level script executed", flush=True)
+
 # Key : Board State
 # Value : (CalculatedValue, Alpha, Beta, Depth)
 # NOTE : Depth is global depth not the depth of the current search
 
 
 # for now: agent is always 1, always max
-agent_num = 1
-opponent_num = 2
-agent_minimax = "max"
 
 
 def init_terminal():
@@ -113,14 +112,21 @@ def find_best_move(board, configuration, total_depth):
     ]
 
     # Select the best state based on the minimax value
-
-    best_state, best_val = (None, float("-inf"))
+    best_state, best_val = (
+        None,
+        float("-inf") if agent_minimax == "max" else float("inf"),
+    )
 
     # For each state, if the value is greater than the best value, update the best state and value
     for i in range(len(values)):
-        if values[i] > best_val:
-            best_val = values[i]
-            best_state = next_states[i]
+        if agent_minimax == "max":
+            if values[i] > best_val:
+                best_val = values[i]
+                best_state = next_states[i]
+        else:
+            if values[i] < best_val:
+                best_val = values[i]
+                best_state = next_states[i]
 
     # Return the column of the best state
 
@@ -157,6 +163,16 @@ def minimax(
 ):
 
     global start_time
+    # global logger
+
+    # logger.info(
+    #     f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms"
+    # )
+
+    print(
+        f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms",
+        flush=True,
+    )
 
     board_hash = (tuple(board), player)
 
@@ -187,7 +203,7 @@ def minimax(
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
 
-    if depth >= maxDepth or python_time.time_ns() - start_time > (2 * 10**8):
+    if depth >= maxDepth:
         score = get_value_window(board)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
@@ -559,21 +575,31 @@ def get_value_better(board):
 def my_agent(observation, configuration):
 
     # Checks if the necessary variables are initialized
-    global total_depth
     global cache
     global time_spent
     global start_time
-    if observation.step == 0:
+    global logger
+    global agent_num
+    global opponent_num
+    global agent_minimax
+    if observation.step == 0 or observation.step == 1:
+        if observation.step == 0:
+            agent_num = 1
+            opponent_num = 2
+            agent_minimax = "max"
+        else:
+            agent_num = 2
+            opponent_num = 1
+            agent_minimax = "min"
+        time_spent = 0
         cache = {}
-        total_depth = 0
     else:
-        total_depth += 2
+        pass
     start_time = python_time.time_ns()
-    move = find_best_move(observation.board, configuration, total_depth)
-    # print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
+    move = find_best_move(observation.board, configuration, observation.step)
     time_spent += python_time.time_ns() - start_time
+    print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
     return move
-
 # %%
 def create_env():
     # Create the ConnectX environment
@@ -588,7 +614,7 @@ def reset(env):
 
 def run(env):
     # Play as the first agent against default "random" agent.
-    env.run([my_agent, "negamax"])
+    env.run(["negamax", my_agent])
 
 # %%
 env = create_env()
@@ -612,7 +638,7 @@ def run_agent():
         agent_stats.observation.remainingOverageTime,
     )
 
-with open("agent2.csv", "w") as f:
+with open("agent2.csv", "a") as f:
     f.write("Attempt, Reward, Steps, Time Remaining\n")
     for i in range(200):
         reward, steps, time = run_agent()
