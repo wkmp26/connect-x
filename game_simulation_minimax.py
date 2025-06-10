@@ -18,7 +18,7 @@ def find_available_index(board, column):
 
     while board[c] == 0:
         c = c + 7
-        if c >= 41:
+        if c > 41:
             break   
     c = c - 7
 
@@ -152,12 +152,8 @@ def sector_check(board, sector, iter):
 
 def print_board(board):
     print("------------------------------------")
-    print(board[:6])
-    print(board[7:13])
-    print(board[14:20])
-    print(board[21:27])
-    print(board[28:34])
-    print(board[35:41])
+    for i in range(6):
+        print(board[i*7:(i+1)*7])
     print("------------------------------------")
 
 
@@ -184,7 +180,8 @@ def game_simulation_human(agent):
             break
 
         move_2 = int(input("Enter move (1-7): "))
-        index_2 = find_available_index(board=game_state.board, column=(move_2-1))
+        move_2 -= 1
+        index_2 = find_available_index(board=game_state.board, column=(move_2))
         game_state.board[index_2] = 2
         print_board(game_state.board)
 
