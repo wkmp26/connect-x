@@ -1,8 +1,5 @@
-# %%
-# Helper functions to convert between the board and a column ,row tuple
-
-
-# Helper function to better print the board
+from kaggle_environments import evaluate, make
+import time as python_time
 # NOTE : Please read the following
 """
 The board is setup in a 1D array where it goes from top left to bottom right
@@ -38,8 +35,6 @@ def printBoard(board, rows, columns):
 
 
 # %%
-from kaggle_environments import evaluate, make
-import time as python_time
 
 print("Top-level script executed", flush=True)
 
@@ -516,22 +511,6 @@ def sector_check(board, sector, iter):
     return max_count_1, max_count_2
 
 
-def main():
-    pass
-    """
-    env = make("connectx", debug=True)
-    env.render()
-
-    env.reset()
-
-    # Play as the first agent against default "random" agent.
-    env.run([my_agent, "negamax"])
-
-    # Print who wins
-    # env.render(mode="ipython", width=500, height=450)
-    """
-
-
 def get_value_better(board):
     rows = [board[i * 7 : (i + 1) * 7] for i in range(6)]
     columns = [[board[p + 7 * r] for r in range(6)] for p in range(7)]
@@ -613,38 +592,34 @@ def reset(env):
     time_spent = 0
 
 def run(env):
-    # Play as the first agent against default "random" agent.
-    env.run(["negamax", my_agent])
+    # Play as the first agent against default "negamax" agent.
+    env.run([my_agent, "negamax"])
+    env.render(mode="ipython", width=500, height=450)
 
-# %%
-env = create_env()
-reset(env)
-run(env)
-env.render(mode="ipython", width=500, height=450)
-# %%
 global time_spent
 
 my_env = create_env()
 def run_agent():
     reset(my_env)
     run(my_env)
-    # Print who wins
-    # env.render(mode="ipython", width=500, height=450)
     agent_stats = my_env.state[0]
-    # print("\nAgent Stats: ", agent_stats)
     return (
         agent_stats.reward,
         agent_stats.observation.step,
         agent_stats.observation.remainingOverageTime,
     )
 
-with open("agent2.csv", "a") as f:
-    f.write("Attempt, Reward, Steps, Time Remaining\n")
-    for i in range(200):
-        reward, steps, time = run_agent()
-        f.write(f"{i}, {reward}, {steps}, {time_spent/(10**9)}\n")
-        print(
-            f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
-        )
+if __name__ == "__main__":
+    run_agent()
+
+# get win/lose data into csv
+# with open("agent2.csv", "w") as f:
+#     f.write("Attempt, Reward, Steps, Time Remaining\n")
+#     for i in range(200):
+#         reward, steps, time = run_agent()
+#         f.write(f"{i}, {reward}, {steps}, {time_spent/(10**9)}\n")
+#         print(
+#             f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
+#         )
 
 # %%

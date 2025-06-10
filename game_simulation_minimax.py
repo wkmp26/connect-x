@@ -1,4 +1,4 @@
-from agent import my_agent
+from agent_minimax import my_agent
 
 class Configuration():
     def __init__(self,columns:int):
@@ -181,7 +181,7 @@ def game_simulation_human(agent):
             print("Player One Wins!")
             break
 
-        move_2 = int(input("Enter move (1-6): "))
+        move_2 = int(input("Enter move (1-7): "))
         index_2 = find_available_index(board=game_state.board, column=(move_2-1))
         game_state.board[index_2] = 2
         print_board(game_state.board)
