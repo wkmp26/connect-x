@@ -7,6 +7,7 @@ class Configuration():
 class Observation():
     def __init__(self, board: list[int]):
         self.board = board
+        self.step = 0
 
 def find_available_index(board, column):
 
@@ -27,7 +28,7 @@ def check_win(board):
     vertical_points = list(range(21))
     horizontal_points = [n + 7*i for i in range(1,6) for n in list(range(4))]
 
-    #vertical
+    # vertical
     for p in vertical_points:
         points = [p +7*i for i in range(4)]
         candidate = [board[i] for i in points]
@@ -35,24 +36,24 @@ def check_win(board):
             return 1
         if candidate == [2,2,2,2]:
             return 2
-        
-    #horizontal
+
+    # horizontal
     for p in horizontal_points:
         candidate = board[p:p+4]
         if candidate == [1,1,1,1]:
             return 1
         if candidate == [2,2,2,2]:
             return 2
-        
+
     sec_1 = [0,1,2,3,7,14,8]
     iter_1 = 8
-    #sector 2 (down right)
+    # sector 2 (down right)
     sec_2 = [3,4,5,6,13,20,12]
     iter_2 = 6
-    #sector 3 (up right)
+    # sector 3 (up right)
     sec_3 = [35,36,37,38,28,21,29]
     iter_3 = -6
-    #sector 4 (up left)
+    # sector 4 (up left)
     sec_4 = [38,39,40,41,34,27,33]
     iter_4 = -8
 
@@ -83,7 +84,7 @@ def check_win(board):
         return 1
     elif curr_2 == 4:
         return 2
-        
+
 
 def diagonals_windows(board):
     #sector 1 (down left)
@@ -148,7 +149,7 @@ def sector_check(board, sector, iter):
 
     return max_count_1, max_count_2
 
-        
+
 def print_board(board):
     print("------------------------------------")
     print(board[:6])
@@ -169,10 +170,11 @@ def game_simulation_human(agent):
                   0,0,0,0,0,0,0,
                   0,0,0,0,0,0,0,
                   0,0,0,0,0,0,0])
-    
+
     while True:
         print("Agent's Turn")
         move_1 = agent(observation=game_state,configuration=config)
+        game_state.step += 2
         index_1 = find_available_index(board=game_state.board,column=move_1)
         game_state.board[index_1] = 1
         print_board(game_state.board)
@@ -189,8 +191,7 @@ def game_simulation_human(agent):
         if check_win(game_state.board) == 2:
             print("Player Two Wins!")
             break
-    
 
-    
+
 if __name__ == "__main__":
     game_simulation_human(my_agent)

@@ -164,11 +164,6 @@ def minimax(
     #     f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms"
     # )
 
-    print(
-        f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms",
-        flush=True,
-    )
-
     board_hash = (tuple(board), player)
 
     if (
@@ -577,7 +572,6 @@ def my_agent(observation, configuration):
     start_time = python_time.time_ns()
     move = find_best_move(observation.board, configuration, observation.step)
     time_spent += python_time.time_ns() - start_time
-    print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
     return move
 # %%
 def create_env():
