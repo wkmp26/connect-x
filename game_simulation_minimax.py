@@ -1,4 +1,4 @@
-from agent import my_agent
+from agent_minimax import my_agent
 
 class Configuration():
     def __init__(self,columns:int):
