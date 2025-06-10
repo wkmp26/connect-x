@@ -1,3 +1,4 @@
+from kaggle_environments import evaluate, make
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -63,3 +64,7 @@ def my_agent(observation, configuration):
         action = torch.argmax(mask).item()  # choose action with highest valid Q-value
 
     return action  # return action to the environment
+if __name__ == "__main__":
+    env = make("connectx", debug=True)
+    env.run([my_agent, "negamax"])
+    env.render(mode="ipython", width=500, height=450)
