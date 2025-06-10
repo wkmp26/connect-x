@@ -18,9 +18,17 @@ python agent_minimax.py
 ```
 To play model yourself:
 ```bash
-python game_simulation.py
+python game_simulation_minimax.py
 ```
 ### RL Model
+To watch model play against negamax:
+```bash
+python agent_rl.py
+```
+To play model yourself:
+```bash
+python game_simulation_rl.py
+```
 
 
 ## Results Documentation
