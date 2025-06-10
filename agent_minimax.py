@@ -566,8 +566,9 @@ def reset(env):
     time_spent = 0
 
 def run(env):
-    # Play as the first agent against default "random" agent.
+    # Play as the first agent against default "negamax" agent.
     env.run([my_agent, "negamax"])
+    env.render(mode="ipython", width=500, height=450)
 
 global time_spent
 
@@ -575,8 +576,6 @@ my_env = create_env()
 def run_agent():
     reset(my_env)
     run(my_env)
-    # Print who wins
-    env.render(mode="ipython", width=500, height=450)
     agent_stats = my_env.state[0]
     return (
         agent_stats.reward,
