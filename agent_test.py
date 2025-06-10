@@ -147,6 +147,72 @@ def find_available_boards(board_state,configuration_columns, player):
             states.append(board_copy)
     return states
 
+def diagonals_windows(board):
+    #sector 1 (down left)
+    sec_1 = [0,1,2,3,7,14,8]
+    iter_1 = 8
+    #sector 2 (down right)
+    sec_2 = [3,4,5,6,13,20,12]
+    iter_2 = 6
+    #sector 3 (up right)
+    sec_3 = [35,36,37,38,28,21,29]
+    iter_3 = -6
+    #sector 4 (up left)
+    sec_4 = [38,39,40,41,34,27,33]
+    iter_4 = -8
+
+    max_count_1 = 0
+    max_count_2 = 0
+
+    curr_1, curr_2 = sector_check(board, sec_1, iter_1)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_2, iter_2)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    curr_1, curr_2 = sector_check(board, sec_4, iter_4)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    return max_count_1, max_count_2
+
+def sector_check(board, sector, iter):
+    max_count_1 = 0
+    max_count_2 = 0
+
+    for s in sector:
+        print(f"Current Sector Point {s}")
+        window = 0
+        count1 = 0
+        count2 = 0
+        one_stuck = False
+        two_stuck = False
+        while window < 4:
+            print(f"Checking cell {board[s + window * iter]}")
+            if board[s + window * iter] == 1:
+                if not one_stuck:
+                    count1 += 1
+                count2 = 0
+                two_stuck = True
+            if board[s + window * iter] == 2:
+                if not two_stuck:
+                    count2 += 1
+                count1 = 0
+                one_stuck = True
+
+            window += 1
+        max_count_1 = max(max_count_1, count1)
+        max_count_2 = max(max_count_2, count2) 
+
+    return max_count_1, max_count_2
+
+
 import time
 
 def test_board_moves_1():
@@ -308,3 +374,29 @@ def test_score_5():
                 ]
             
     assert get_value_better(board3) == -1000
+
+def test_diagonal_1():
+    board1 = [
+                0,0,0,2,0,0,0,
+                0,0,0,0,2,0,0,
+                0,0,0,1,0,2,0,
+                0,0,1,0,0,0,2,
+                0,1,0,0,0,0,0,
+                1,0,0,0,0,0,0,
+                ]
+            
+    assert diagonals_windows(board1)[0] == 4
+    assert diagonals_windows(board1)[1] == 4
+
+def test_diagonal_2():
+    board2 = [
+                0,2,0,0,0,0,0,
+                0,0,2,0,0,0,0,
+                0,0,0,2,0,2,0,
+                0,0,1,0,0,1,2,
+                0,1,0,1,1,0,0,
+                0,0,0,1,0,0,0,
+                ]
+            
+    assert diagonals_windows(board2)[0] == 3
+    assert diagonals_windows(board2)[1] == 3

@@ -39,6 +39,7 @@ def printBoard(board, rows, columns):
 
 # %%
 from kaggle_environments import evaluate, make
+import time as python_time
 
 # Key : Board State
 # Value : (CalculatedValue, Alpha, Beta, Depth)
@@ -129,22 +130,6 @@ def find_best_move(board, configuration, total_depth):
             return j % 7
 
 
-def my_agent(observation, configuration):
-
-    # Checks if the necessary variables are initialized
-    global total_depth
-    global cache
-    try:
-        cache
-        total_depth
-    except NameError:
-        cache = {}
-        total_depth = 0
-
-    total_depth += 2
-    return find_best_move(observation.board, configuration, total_depth)
-
-
 def determine_max_depth(children, numberOfStepsIn):
     # Determine the max depth based on the number of children and the number of steps in
     if numberOfStepsIn < 10 or children >= 6:
@@ -170,6 +155,8 @@ def minimax(
     cache=None,
     maxDepth=5,
 ):
+
+    global start_time
 
     board_hash = (tuple(board), player)
 
@@ -200,7 +187,7 @@ def minimax(
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
 
-    if depth >= maxDepth:
+    if depth >= maxDepth or python_time.time_ns() - start_time > (2 * 10**8):
         score = get_value_window(board)
         cache[board_hash] = (score, total_depth + depth, "EXACT")
         return score
@@ -360,6 +347,7 @@ def get_value_window(board):
             continue
         max_count_1 = max(max_count_1, count1)
         max_count_2 = max(max_count_2, count2)
+        
     # columns
     row = 0
     while row < 4:
@@ -393,11 +381,128 @@ def get_value_window(board):
         return 1000
     if max_count_2 == 4:
         return -1000
+    
+    
+    diagonals_1, diagonals_2 = diagonals_windows(board)
+    max_count_1 = max(max_count_1, diagonals_1)
+    max_count_2 = max(max_count_2, diagonals_2)
+    
+    if max_count_1 == 4:
+        return 1000
+    if max_count_2 == 4:
+        return -1000
 
     return scoring[max_count_1] - scoring[max_count_2]
 
+def find_available_boards(board_state,configuration_columns, player):
+
+    states = []
+    available_columns=[]
+    for c in range(configuration_columns):
+        if board_state[c] == 0:
+            available_columns.append(c)
+
+    for c in available_columns:
+        
+        while board_state[c] == 0:
+            c = c + 7
+            if c > 41:
+                break
+        
+        c = c - 7
+
+        """
+        if c == 41:
+            print("IM AT 41")
+        """
+
+        if board_state[c]==0:
+            board_copy = board_state.copy()
+            board_copy[c] = player
+            states.append(board_copy)
+    return states
+
+def diagonals_windows(board):
+    #sector 1 (down left)
+    sec_1 = [0,1,2,3,7,14,8]
+    iter_1 = 8
+    #sector 2 (down right)
+    sec_2 = [3,4,5,6,13,20,12]
+    iter_2 = 6
+    #sector 3 (up right)
+    sec_3 = [35,36,37,38,28,21,29]
+    iter_3 = -6
+    #sector 4 (up left)
+    sec_4 = [38,39,40,41,34,27,33]
+    iter_4 = -8
+
+    max_count_1 = 0
+    max_count_2 = 0
+
+    curr_1, curr_2 = sector_check(board, sec_1, iter_1)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_2, iter_2)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_3, iter_3)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+    if max_count_1 == 4 or max_count_2 == 4:
+        return max_count_1, max_count_2
+
+    curr_1, curr_2 = sector_check(board, sec_4, iter_4)
+    max_count_1 = max(max_count_1, curr_1)
+    max_count_2 = max(max_count_2, curr_2)
+
+
+    return max_count_1, max_count_2
+
+def sector_check(board, sector, iter):
+    max_count_1 = 0
+    max_count_2 = 0
+
+    for s in sector:
+        window = 0
+        count1 = 0
+        count2 = 0
+        one_stuck = False
+        two_stuck = False
+        while window < 4:
+            if board[s + window * iter] == 1:
+                if not one_stuck:
+                    count1 += 1
+                count2 = 0
+                two_stuck = True
+            if board[s + window * iter] == 2:
+                if not two_stuck:
+                    count2 += 1
+                count1 = 0
+                one_stuck = True
+
+            window += 1
+
+        max_count_1 = max(max_count_1, count1)
+        max_count_2 = max(max_count_2, count2) 
+
+        if max_count_1 == 4 or max_count_2 == 4:
+            return max_count_1, max_count_2
+
+    return max_count_1, max_count_2
+
 
 def main():
+    pass
+    """
     env = make("connectx", debug=True)
     env.render()
 
@@ -408,13 +513,7 @@ def main():
 
     # Print who wins
     # env.render(mode="ipython", width=500, height=450)
-    agent_stats = env.state[0]
-    # print("\nAgent Stats: ", agent_stats)
-    return (
-        agent_stats.reward,
-        agent_stats.observation.step,
-        agent_stats.observation.remainingOverageTime,
-    )
+    """
 
 
 def get_value_better(board):
@@ -457,131 +556,69 @@ def get_value_better(board):
 
     return score
 
+def my_agent(observation, configuration):
 
-def human_agent(observation, configuration):
-    # print_board(observation.board)
-    return int(input("Enter move (0-6): "))
-
-
-# %%
-
-
-#### Heuristic Graveyard
-def get_value_simple(board):
-    vertical_points = list(range(21))
-    horizontal_points = [n + 7 * i for i in range(1, 6) for n in list(range(4))]
-    score = 0
-
-    # vertical
-    for p in vertical_points:
-        points = [p + 7 * i for i in range(4)]
-        candidate = [board[i] for i in points]
-        if candidate == [1, 1, 1, 1]:
-            return 1000
-        if candidate == [2, 2, 2, 2]:
-            return -1000
-        score += count_consecutive_score(p)
-
-    # horizontal
-    for p in horizontal_points:
-        candidate = board[p : p + 4]
-        if candidate == [1, 1, 1, 1]:
-            return 1000
-        if candidate == [2, 2, 2, 2]:
-            return -1000
-        score += count_consecutive_score(p)
-
-    return score
-
-
-def count_consecutive_score(row):
-    max_count_1 = count_1 = 0
-    max_count_2 = count_2 = 0
-
-    scoring = {
-        0: 0,
-        1: 0,
-        2: 10,
-        3: 40,
-    }
-
-    for r in row:
-        if r == 1:
-            count_1 += 1
-            count_2 = 0
-            max_count_1 = max(max_count_1, count_1)
-        elif r == 2:
-            count_2 += 1
-            count_1 = 0
-            max_count_2 = max(max_count_2, count_2)
-        else:
-            count_1 = 0
-            count_2 = 0
-
-    return scoring[max_count_1], -scoring[max_count_2]
-
-
-"""
-# %%
-# Set up environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Replace `human_agent` with another agent if you want AI vs AI
-agents = [human_agent, my_agent]
-
-# Run interactively
-while not env.done:
-    current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-    observation = env.state[current_player].observation
-    action = agents[current_player](observation, env.configuration)
-    env.step(action)
-    env.render(mode="ipython", width=500, height=450)
-
-
-
-# %%
-# Initialize environment
-env = make("connectx", debug=True)
-env.reset()
-
-# Play game step-by-step
-while not env.done:
-    observation = env.state[0].observation
-    current_player = [i for i, p in enumerate(env.state) if p.status == "ACTIVE"][0]
-
-
-    print_board(observation.board)
-
-    if current_player == 0:
-        move = human_agent(observation, env.configuration)
-        env.step([move, None])
+    # Checks if the necessary variables are initialized
+    global total_depth
+    global cache
+    global time_spent
+    global start_time
+    if observation.step == 0:
+        cache = {}
+        total_depth = 0
     else:
-        move = my_agent(observation, env.configuration)
-        env.step([None, move])
+        total_depth += 2
+    start_time = python_time.time_ns()
+    move = find_best_move(observation.board, configuration, total_depth)
+    # print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
+    time_spent += python_time.time_ns() - start_time
+    return move
 
-# Show final board
-print_board(env.state[0].observation.board)
+# %%
+def create_env():
+    # Create the ConnectX environment
+    env = make("connectx", debug=True)
+    return env
+def reset(env):
+    env.reset()
+
+    # Reset all global variables
+    global time_spent
+    time_spent = 0
+
+def run(env):
+    # Play as the first agent against default "random" agent.
+    env.run([my_agent, "negamax"])
+
+# %%
+env = create_env()
+reset(env)
+run(env)
 env.render(mode="ipython", width=500, height=450)
 # %%
+global time_spent
+
+my_env = create_env()
+def run_agent():
+    reset(my_env)
+    run(my_env)
+    # Print who wins
+    # env.render(mode="ipython", width=500, height=450)
+    agent_stats = my_env.state[0]
+    # print("\nAgent Stats: ", agent_stats)
+    return (
+        agent_stats.reward,
+        agent_stats.observation.step,
+        agent_stats.observation.remainingOverageTime,
+    )
+
+with open("agent2.csv", "w") as f:
+    f.write("Attempt, Reward, Steps, Time Remaining\n")
+    for i in range(200):
+        reward, steps, time = run_agent()
+        f.write(f"{i}, {reward}, {steps}, {time_spent/(10**9)}\n")
+        print(
+            f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
+        )
 
 # %%
-if __name__ == "__main__":
-    env = make("connectx", debug=True)
-    #env.render()
-
-    env.reset()
-    # Play as the first agent against default "random"/"negamax" agent.
-    #env.run([human_agent, my_agent])
-
-    #env.render(mode="ipython", width=500, height=450)
-
-    agents = [human_agent,my_agent]
-
-    while not env.done:
-        current_player = env.state[env.state.index(next(p for p in env.state if p.status == "ACTIVE"))].index
-        observation = env.state[current_player].observation
-        action = agents[current_player](observation, env.configuration)
-        env.step(action)
-
-"""
