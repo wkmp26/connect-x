@@ -35,3 +35,5 @@ python game_simulation_rl.py
 
 ## Results Documentation
 
+[Spreadsheet](https://docs.google.com/spreadsheets/d/1r8QV21kNcNr8rWLxhyOT9muzSCDaUxhJbKrxZgYf7gs/edit?usp=sharing)
+
