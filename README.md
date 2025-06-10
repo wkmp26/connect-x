@@ -1,6 +1,6 @@
 # Connect X
 - Instructor: Rodrigo Canaan
-- Group Members: Sumedha Kundurthi, 
+- Group Members: Sumedha Kundurthi, Jenna Chan, Weston Patrick, Mio Nakagawa, Brian Kwong
 
 ## Usage Instructions
 Installations:
