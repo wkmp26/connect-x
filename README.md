@@ -1,12 +1,14 @@
 # Connect X
-Instructor: Rodrigo Canaan
-Group Members: Sumedha Kundurthi, 
+- Instructor: Rodrigo Canaan
+- Group Members: Sumedha Kundurthi, 
 
 ## Usage Instructions
 Installations:
-- kaggle_environments
-- numpy
-- torch
+ ```bash
+  pip install kaggle_environments
+  pip install numpy
+  pip install torch
+  ```
   
 Run models in a Jupyter Notebook/Google Colab for best experience
 
