@@ -163,17 +163,9 @@ def minimax(
 ):
 
     global start_time
-    # global logger
+    global count
 
-    # logger.info(
-    #     f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms"
-    # )
-
-    print(
-        f"Minimax called with player: {player}, depth: {depth}, total_depth: {total_depth}, alpha: {alpha}, beta: {beta}, time used : {(python_time.time_ns() - start_time)/1_000_000} ms",
-        flush=True,
-    )
-
+    count += 1
     board_hash = (tuple(board), player)
 
     if (
@@ -598,9 +590,11 @@ def my_agent(observation, configuration):
     start_time = python_time.time_ns()
     move = find_best_move(observation.board, configuration, observation.step)
     time_spent += python_time.time_ns() - start_time
-    print(f"Move: {move}, Time Spent: {time_spent/(10**9)} seconds")
     return move
 # %%
+from agent_rl import my_agent as rl_agent
+import global_time
+
 def create_env():
     # Create the ConnectX environment
     env = make("connectx", debug=True)
@@ -611,10 +605,14 @@ def reset(env):
     # Reset all global variables
     global time_spent
     time_spent = 0
+    global_time.time_spent_2 = 0
+    global count
+    count = 0
+
 
 def run(env):
     # Play as the first agent against default "random" agent.
-    env.run(["negamax", my_agent])
+    env.run([my_agent, rl_agent])
 
 # %%
 env = create_env()
@@ -631,20 +629,37 @@ def run_agent():
     # Print who wins
     # env.render(mode="ipython", width=500, height=450)
     agent_stats = my_env.state[0]
+    agent_stats2 = my_env.state[1]
+
+    print("\nAgent Stats: ", agent_stats)
+    print("\nAgent Stats2: ", agent_stats2)
     # print("\nAgent Stats: ", agent_stats)
     return (
-        agent_stats.reward,
-        agent_stats.observation.step,
-        agent_stats.observation.remainingOverageTime,
+        (
+            agent_stats.reward,
+            agent_stats.observation.step,
+            agent_stats.observation.remainingOverageTime,
+        ),
+        (
+            agent_stats2.reward,
+            agent_stats2.observation.remainingOverageTime,
+        ),
     )
 
-with open("agent2.csv", "a") as f:
-    f.write("Attempt, Reward, Steps, Time Remaining\n")
-    for i in range(200):
-        reward, steps, time = run_agent()
-        f.write(f"{i}, {reward}, {steps}, {time_spent/(10**9)}\n")
-        print(
-            f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
-        )
-
+try:
+    with open("agent2.csv", "a") as f:
+        f.write("Attempt, Reward, Steps, Time Remaining\n")
+        for i in range(200):
+            global count
+            (reward, steps, time), (reward2, time2) = run_agent()
+            f.write(f"{i}, Agent1, {reward}, {steps}, {time/(10**9)}, {count}\n")
+            f.write(f"{i}, Agent2, {reward2}, n/a , {time2/(10**9)}, {count}\n")
+            print(
+                f"Attempt: {i}, Reward: {reward}, Steps: {steps}, Time: {time_spent/(10**9)} seconds"
+            )
+            print(
+                f"Attempt: {i}, Reward: {reward2}, Steps: n/a, Time: {global_time.time_spent_2/(10**9)} seconds"
+            )
+except Exception as e:
+    print(f"An error occurred: {e}")
 # %%

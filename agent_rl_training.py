@@ -55,7 +55,7 @@
 # env.reset()
 # n_actions = env.configuration.columns
 
-# # instantiate models and training 
+# # instantiate models and training
 # policy_net = DQN(n_actions).to(device)
 # target_net = DQN(n_actions).to(device)
 # target_net.load_state_dict(policy_net.state_dict())
@@ -174,7 +174,7 @@ EPS_DECAY = 10000
 BATCH_SIZE = 256
 GAMMA = 0.999
 TARGET_UPDATE = 20
-NUM_EPISODES = 20000
+NUM_EPISODES = 200000
 NEGAMAX_START = 5000
 BLOCKER_START = 2000
 

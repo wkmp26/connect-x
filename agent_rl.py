@@ -63,6 +63,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+import time
+import global_time
+
 
 device = torch.device("cpu")
 
@@ -97,9 +100,9 @@ def get_available_actions(board, width):
     return [col for col in range(width) if board[col] == 0]
 
 def my_agent(observation, configuration):
+    start_time = time.time_ns()
     board = encode_board(observation.board, observation.mark)
     board_input = torch.tensor(board, dtype=torch.float32).unsqueeze(0)
-
     available_actions = get_available_actions(observation.board, configuration.columns)
     with torch.no_grad():
         action_values = model(board_input)[0]
@@ -107,4 +110,5 @@ def my_agent(observation, configuration):
         for a in available_actions:
             mask[a] = action_values[a]
         action = torch.argmax(mask).item()
+    global_time.time_spent_2 += time.time_ns() - start_time
     return action
