@@ -39,3 +39,6 @@ python game_simulation_rl.py
 
 [Spreadsheet](https://docs.google.com/spreadsheets/d/1r8QV21kNcNr8rWLxhyOT9muzSCDaUxhJbKrxZgYf7gs/edit?usp=sharing)
 
+## Additional Reference
+We referenced the Connect 4 project structure from the following GitHub repository:
+https://github.com/neoyung/connect-4
